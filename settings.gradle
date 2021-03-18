@@ -1,0 +1,4 @@
+rootProject.name = 'translator-annotated-data'
+include ('translator', 'app')
+enableFeaturePreview('VERSION_CATALOGS')
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

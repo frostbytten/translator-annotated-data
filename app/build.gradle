@@ -1,0 +1,13 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation projects.translator
+    implementation libs.bundles.jackson
+    implementation libs.logback
+}
+
+application {
+    mainClass = 'org.agmip.translators.annotated.app.Application'
+}

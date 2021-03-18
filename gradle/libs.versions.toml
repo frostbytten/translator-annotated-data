@@ -1,0 +1,19 @@
+[versions]
+jackson = "2.12.3"
+logback = "1.2.3"
+junit = "5.7.1"
+assertj = "3.19.0"
+
+[libraries]
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-java8 = { module = "com.fasterxml.jackson.module:jackson-modules-java8", version.ref = "jackson" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+junit-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
+[bundles]
+jackson = ["jackson-core", "jackson-databind", "jackson-java8"]
+junit = ["junit-api", "junit-params", "assertj-core"]

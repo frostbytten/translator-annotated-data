@@ -1,0 +1,15 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+bin
+
+# Ignore IDE-specific files/directories
+.idea
+.project
+.settings
+.classpath
+
+# Ignore JQwik patterns
+.jqwik-database

@@ -1,0 +1,27 @@
+plugins {
+    id 'java-library'
+}
+
+compileTestJava {
+    options.compilerArgs += '-parameters'
+    options.encoding = 'UTF-8'
+}
+
+dependencies {
+    implementation libs.bundles.jackson
+    implementation libs.logback
+    
+    testImplementation libs.bundles.junit
+    testImplementation "com.google.jimfs:jimfs:1.2"
+    testRuntimeOnly libs.junit.engine
+}
+
+test {
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+    testLogging {
+        events "FAILED", "STANDARD_ERROR"
+        //events "PASSED", "FAILED", "SKIPPED", "STANDARD_OUT", "STANDARD_ERROR"
+    }
+}
