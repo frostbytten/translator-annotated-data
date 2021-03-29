@@ -1,7 +1,6 @@
 package test.components;
 
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationKeyType;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationPart;
 import org.agmip.translators.annotated.sidecar2.parsers.RelationParser;
 
@@ -24,38 +23,32 @@ public class Sc2RelationsTest {
 
     public static RelationCheck relMinimum = new RelationCheckBuilder(true)
             .withFile(FMFN_XLSX_VAL)
-            .withRelationType(Sc2RelationKeyType.PRIMARY)
             .addKeyColumn(1)
             .build();
 
     public static RelationCheck relFull = new RelationCheckBuilder(true)
             .withFile(FMFN_XLSX_VAL)
-            .withRelationType(Sc2RelationKeyType.PRIMARY)
             .withSheet(SSN_VAL)
             .addKeyColumn(1)
             .build();
 
     public static RelationCheck relWithoutColumns = new RelationCheckBuilder(false)
             .withFile(FMFN_XLSX_VAL)
-            .withRelationType(Sc2RelationKeyType.PRIMARY)
             .build();
 
     public static RelationCheck relWithInvalidColumn = new RelationCheckBuilder(false)
             .withFile(FMFN_XLSX_VAL)
-            .withRelationType(Sc2RelationKeyType.PRIMARY)
             .addKeyColumn(-7)
             .build();
 
     public static RelationCheck relWithDuplicateColumn = new RelationCheckBuilder(false)
             .withFile(FMFN_XLSX_VAL)
-            .withRelationType(Sc2RelationKeyType.PRIMARY)
             .addKeyColumn(0)
             .addKeyColumn(0)
             .build();
 
     public static RelationCheck relWithMultipleColumn = new RelationCheckBuilder(true)
             .withFile(FMFN_XLSX_VAL)
-            .withRelationType(Sc2RelationKeyType.PRIMARY)
             .addKeyColumn(0)
             .addKeyColumn(1)
             .build();
@@ -77,7 +70,7 @@ public class Sc2RelationsTest {
     @ParameterizedTest
     @MethodSource("providesRelations")
     void shouldValidateRelation(RelationCheck rel) {
-        Sc2RelationPart part = RelationParser._parse(rel.json, rel.checker.scrType);
+        Sc2RelationPart part = RelationParser._parse(rel.json);
         System.out.println(part.reason());
         assertThat(part.isValid()).isEqualTo(rel.checker.valid);
     }

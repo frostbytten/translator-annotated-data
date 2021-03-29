@@ -4,10 +4,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 public class Sc2Relation {
-    public enum Sc2RelationKeyType {
-        PRIMARY,
-        FOREIGN
-    }
     private final Sc2RelationPart _primary;
     private final Sc2RelationPart _foreign;
     private boolean valid;
@@ -15,6 +11,14 @@ public class Sc2Relation {
         this._primary = primary;
         this._foreign = foreign;
         this.valid = validate();
+    }
+
+    public Sc2RelationPart getPrimary() {
+        return _primary;
+    }
+
+    public Sc2RelationPart getForeign() {
+        return _foreign;
     }
 
     private boolean validate() {
@@ -34,16 +38,14 @@ public class Sc2Relation {
         private final String _file;
         private final String _sheet;
         private final int[] _keys;
-        private final Sc2RelationKeyType _type;
         private final StringBuilder _reason;
         private boolean valid;
 
-        public Sc2RelationPart(String file, String sheet, int[] keys, Sc2RelationKeyType scrType) {
+        public Sc2RelationPart(String file, String sheet, int[] keys) {
             this._reason = new StringBuilder();
             this._file = file;
             this._sheet = sheet;
             this._keys = keys;
-            this._type = scrType;
             this.valid = validate();
         }
 
@@ -53,16 +55,12 @@ public class Sc2Relation {
                 invalidate("No file specified");
                 validated = false;
             }
-            if (_type == null) {
-                invalidate("No relationship type defined");
-                validated = false;
-            }
             if (_keys.length < 1) {
                 invalidate("No columns selected to use as keys");
                 validated = false;
             }
             if (Arrays.stream(_keys).anyMatch(i -> i < 0)) {
-                invalidate("No valid columns provided to use as keys");
+                invalidate("Invalid columns provided to use as keys");
                 validated = false;
             }
             if (!Arrays.stream(_keys).allMatch(new HashSet<>()::add)) {
@@ -70,6 +68,18 @@ public class Sc2Relation {
                 validated = false;
             }
             return validated;
+        }
+
+        public String getFile() {
+            return _file;
+        }
+
+        public String getSheet() {
+            return _sheet;
+        }
+
+        public int[] getKeys() {
+            return _keys;
         }
 
         public boolean isValid() {
@@ -85,6 +95,37 @@ public class Sc2Relation {
         public String reason() {
             return _reason.toString();
         }
-    }
 
+        @Override
+        public int hashCode() {
+            int result = 13;
+
+            result = ((_file != null) ? 53 * result + _file.hashCode() : 47 * result );
+            result = ((_sheet != null) ? 53 * result + _sheet.hashCode() : 47 * result );
+            result = 59 * result + Arrays.hashCode(_keys);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (o == null) {
+                return false;
+            }
+            if(o.getClass() != this.getClass()) {
+                return false;
+            }
+            final Sc2RelationPart other = (Sc2RelationPart) o;
+            if (this._file == null ? other.getFile() != null : !this._file.equals(other.getFile())) return false;
+            if (this._sheet == null ? other.getSheet() != null : !this._sheet.equals(other.getSheet())) return false;
+            return Arrays.equals(this._keys, other.getKeys());
+        }
+
+        @Override
+        public String toString() {
+            return _file + ((_sheet == null) ? "" : ("["+_sheet+"]")) + Arrays.toString(_keys);
+        }
+    }
 }

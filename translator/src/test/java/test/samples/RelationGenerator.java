@@ -3,7 +3,6 @@ package test.samples;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationKeyType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,14 +43,12 @@ public class RelationGenerator {
         public final String file;
         public final String sheet;
         public final int[] keys;
-        public final Sc2RelationKeyType scrType;
         public final boolean valid;
 
-        public RelationCheckFrame(String file, String sheet, int[] keys, Sc2RelationKeyType scrType, boolean valid) {
+        public RelationCheckFrame(String file, String sheet, int[] keys, boolean valid) {
             this.file = file;
             this.sheet = sheet;
             this.keys = keys;
-            this.scrType = scrType;
             this.valid = valid;
         }
     }
@@ -72,7 +69,6 @@ public class RelationGenerator {
         private String file;
         private String sheet;
         private List<Integer> keys = new ArrayList<>();
-        private Sc2RelationKeyType scrType;
         private ObjectNode json;
         private ArrayNode keyList;
         private final boolean valid;
@@ -101,18 +97,13 @@ public class RelationGenerator {
             return this;
         }
 
-        public RelationCheckBuilder withRelationType(Sc2RelationKeyType scrType) {
-            this.scrType = scrType;
-            return this;
-        }
-
         public RelationCheck build() {
             return new RelationCheck(buildJson(), buildCheckFrame());
         }
 
         public RelationCheckFrame buildCheckFrame() {
             int[] colKeys = keys.stream().mapToInt(i -> i).toArray();
-            return new RelationCheckFrame(file, sheet, colKeys, scrType, valid);
+            return new RelationCheckFrame(file, sheet, colKeys, valid);
         }
 
         public JsonNode buildJson() {

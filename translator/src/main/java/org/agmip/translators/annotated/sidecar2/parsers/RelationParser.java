@@ -2,7 +2,6 @@ package org.agmip.translators.annotated.sidecar2.parsers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationKeyType;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationPart;
 
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.*;
@@ -13,12 +12,12 @@ import java.util.List;
 
 public class RelationParser {
     public static Sc2Relation parse(JsonNode json) {
-        Sc2RelationPart from = _parse(json.path(RELF_FIELD), Sc2RelationKeyType.PRIMARY);
-        Sc2RelationPart to = _parse(json.path(RELT_FIELD), Sc2RelationKeyType.FOREIGN);
+        Sc2RelationPart from = _parse(json.path(RELF_FIELD));
+        Sc2RelationPart to = _parse(json.path(RELT_FIELD));
         return new Sc2Relation(from, to);
     }
 
-    public static Sc2RelationPart _parse(JsonNode json, Sc2RelationKeyType dir) {
+    public static Sc2RelationPart _parse(JsonNode json) {
         String file = json.path(REL_F_FIELD).asText();
         String sheet = json.path(REL_S_FIELD).asText();
         List<Integer> entries = new ArrayList<>();
@@ -29,6 +28,6 @@ public class RelationParser {
                 entries.add(key.path(COL_FIELD).asInt(-1));
             }
         }
-        return new Sc2RelationPart(file, sheet, entries.stream().mapToInt(i -> i).toArray(), dir);
+        return new Sc2RelationPart(file, sheet, entries.stream().mapToInt(i -> i).toArray());
     }
 }
