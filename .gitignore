@@ -13,3 +13,6 @@ bin
 
 # Ignore JQwik patterns
 .jqwik-database
+
+# Ignore test scripts
+test-sample.sh

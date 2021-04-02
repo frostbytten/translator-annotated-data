@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.SUPPORTED_MIME;
 
@@ -47,7 +48,7 @@ public class Sc2File {
     }
 
     public List<Sc2Sheet> sheets() {
-        return _sheets;
+        return _sheets.stream().filter(s -> s.isValid()).collect(Collectors.toList());
     }
 
     public boolean fileReachable(Path workingDir) {
