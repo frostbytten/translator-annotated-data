@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -104,7 +103,7 @@ public class Sidecar2 {
 		}
 		List<String> relOrder = new ArrayList<>();
 		Iterator<DataContext> iter = new TopologicalOrderIterator<>(rGraph);
-		iter.forEachRemaining(v -> relOrder.add(v.toString(false) + " - " + rGraph.degreeOf(v)));
+		iter.forEachRemaining(v -> relOrder.add(v.toString(false) + " - " + rGraph.degreeOf(v) + "[" + v.maxBound() + "]"));
 		Collections.reverse(relOrder);
 		return relOrder;
 	}

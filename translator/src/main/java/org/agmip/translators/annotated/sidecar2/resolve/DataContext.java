@@ -1,5 +1,6 @@
 package org.agmip.translators.annotated.sidecar2.resolve; 
 
+import org.agmip.translators.annotated.sidecar2.Utilities;
 import org.agmip.translators.annotated.sidecar2.components.Sc2File;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 
@@ -79,5 +80,9 @@ public class DataContext {
 
 	public String toString(boolean withRange) {
 		return "file="+ _filename +((_sheetname != null) ? (";sheet="+_sheetname) : "")+((withRange) ? _ranges.toString(): "");
+	}
+
+	public int maxBound() {
+		return Utilities.getMaxSheetColumn(_sheet);
 	}
 }
