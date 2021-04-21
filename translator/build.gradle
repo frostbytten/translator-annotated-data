@@ -18,6 +18,7 @@ dependencies {
 	implementation libs.jgrapht.core
 	implementation "org.agmip.ace:ace-core:2.1.5-SNAPSHOT"
 	implementation "org.codehaus.groovy:groovy:3.0.8"
+	implementation "com.opencsv:opencsv:5.4"
 	testImplementation platform("org.spockframework:spock-bom:2.0-groovy-3.0")
 	testImplementation "org.spockframework:spock-core"
 	testImplementation libs.bundles.junit

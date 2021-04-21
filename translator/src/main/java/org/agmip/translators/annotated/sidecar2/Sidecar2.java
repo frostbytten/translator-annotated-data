@@ -1,5 +1,6 @@
 package org.agmip.translators.annotated.sidecar2;
 
+import org.agmip.translators.annotated.data.RawDataRow;
 import org.agmip.translators.annotated.sidecar2.components.Sc2File;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationPart;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,4 +109,8 @@ public class Sidecar2 {
 		Collections.reverse(relOrder);
 		return relOrder;
 	}
+
+  public Map<String, List<RawDataRow>> parseFiles() {
+    return null;
+  }
 }
