@@ -1,88 +1,90 @@
-package org.agmip.translators.annotated.sidecar2.resolve; 
-
-import org.agmip.translators.annotated.sidecar2.Utilities;
-import org.agmip.translators.annotated.sidecar2.components.Sc2File;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
+package org.agmip.translators.annotated.sidecar2.resolve;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class DataContext { 
-	private final String _filename;
-	private final String _sheetname;
-	private final Sc2File _file;
-	private final Sc2Sheet _sheet;
-	private final Set<DataRange> _ranges;
-	private int _rootScore;
+import org.agmip.translators.annotated.sidecar2.Utilities;
+import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
+import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 
-	public DataContext(Sc2File file, Sc2Sheet sheet) {
-		_file = file;
-		_sheet = sheet;
-		_filename = file.tryName("_");
-		_sheetname = sheet.tryName("_");
-		_ranges = new HashSet<>();
-		_rootScore = 0;
-	}
+public class DataContext {
+  private final String _filename;
+  private final String _sheetname;
+  private final Sc2FileReference _file;
+  private final Sc2Sheet _sheet;
+  private final Set<DataRange> _ranges;
+  private int _rootScore;
 
-	public String filename() {
-		return _filename;
-	}
-	
+  public DataContext(Sc2FileReference file, Sc2Sheet sheet) {
+    _file = file;
+    _sheet = sheet;
+    _filename = file.tryName("_");
+    _sheetname = sheet.tryName("_");
+    _ranges = new HashSet<>();
+    _rootScore = 0;
+  }
 
-	public String sheetname() {
-		return _sheetname;
-	}
+  public String filename() {
+    return _filename;
+  }
 
-	public Sc2File file() {
-		return _file;
-	}
+  public String sheetname() {
+    return _sheetname;
+  }
 
-	public Sc2Sheet sheet() {
-		return _sheet;
-	}
+  public Sc2FileReference file() {
+    return _file;
+  }
 
-	public boolean addRange(DataRange range) {
-		return _ranges.add(range);
-	}
+  public Sc2Sheet sheet() {
+    return _sheet;
+  }
 
-	public Set<DataRange> ranges() {
-		return _ranges;
-	}
+  public boolean addRange(DataRange range) {
+    return _ranges.add(range);
+  }
 
-	public String getKey() {
-		return _filename + "$$" + _sheetname;
-	}
+  public Set<DataRange> ranges() {
+    return _ranges;
+  }
 
-	 public int rootScore() {
-		return _rootScore;
-	}
+  public String getKey() {
+    return _filename + "$$" + _sheetname;
+  }
 
-	public void incrementRootScore() {
-		incrementRootScore(1);
-	}
+  public int rootScore() {
+    return _rootScore;
+  }
 
-	public void incrementRootScore(int inc) {
-		_rootScore += inc;
-	}
+  public void incrementRootScore() {
+    incrementRootScore(1);
+  }
 
-	public void decrementRootScore() {
-		decrementRootScore(1);
-	}
+  public void incrementRootScore(int inc) {
+    _rootScore += inc;
+  }
 
-	public void decrementRootScore(int dec) {
-		_rootScore += dec;
-	}
+  public void decrementRootScore() {
+    decrementRootScore(1);
+  }
 
-	@Override
-	public String toString() {
-		return toString(true);
-	}
+  public void decrementRootScore(int dec) {
+    _rootScore += dec;
+  }
 
-	public String toString(boolean withRange) {
-		return "file="+ _filename +((_sheetname != null) ? (";sheet="+_sheetname) : "")+((withRange) ? _ranges.toString(): "");
-	}
+  @Override
+  public String toString() {
+    return toString(true);
+  }
 
-	public int maxBound() {
-		return Utilities.getMaxSheetColumn(_sheet);
-	}
+  public String toString(boolean withRange) {
+    return "file="
+        + _filename
+        + ((_sheetname != null) ? (";sheet=" + _sheetname) : "")
+        + ((withRange) ? _ranges.toString() : "");
+  }
+
+  public int maxBound() {
+    return Utilities.getMaxSheetColumn(_sheet);
+  }
 }

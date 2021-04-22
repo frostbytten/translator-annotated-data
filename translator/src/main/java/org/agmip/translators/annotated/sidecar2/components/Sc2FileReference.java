@@ -1,32 +1,32 @@
 package org.agmip.translators.annotated.sidecar2.components;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.SUPPORTED_MIME;
 
-public class Sc2File {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+public class Sc2FileReference {
   private final String _name;
   private final String _url;
   private final String _contentType;
   private final List<Sc2Sheet> _sheets;
-  private boolean _fileValid;
+  private final boolean _fileValid;
   private boolean valid;
-  private List<String> _reasons;
+  private final List<String> _reasons;
 
-  public Sc2File(String name, String url, String contentType, List<Sc2Sheet> sheets) {
+  public Sc2FileReference(String name, String url, String contentType, List<Sc2Sheet> sheets) {
     this._name = name;
     this._url = url;
     this._contentType = contentType;
     this._sheets = sheets;
     this._reasons = new ArrayList<>();
-    this._fileValid = ((this._name != null) || (this._url != null)) && (this._contentType != null) &&
-      Arrays.stream(SUPPORTED_MIME).anyMatch(this._contentType::equalsIgnoreCase);
+    this._fileValid =
+        ((this._name != null) || (this._url != null))
+            && (this._contentType != null)
+            && Arrays.stream(SUPPORTED_MIME).anyMatch(this._contentType::equalsIgnoreCase);
     this.valid = _fileValid;
   }
 
@@ -43,15 +43,15 @@ public class Sc2File {
   }
 
   public String tryName(String orElse) {
-    return getName().orElseGet(() -> orElse);
+    return getName().orElse(orElse);
   }
 
   public String tryUrl(String orElse) {
-    return getUrl().orElseGet(() -> orElse);
+    return getUrl().orElse(orElse);
   }
 
   public List<Sc2Sheet> sheets() {
-    return _sheets.stream().filter(s -> s.isValid()).collect(Collectors.toList());
+    return _sheets.stream().filter(Sc2Sheet::isValid).collect(Collectors.toList());
   }
 
   public boolean isValid() {
