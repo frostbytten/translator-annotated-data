@@ -1,4 +1,4 @@
-package test.components
+package test.sidecar2.components
 
 import org.agmip.translators.annotated.sidecar2.resolve.DataRange
 import spock.lang.Specification

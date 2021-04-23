@@ -101,8 +101,6 @@ public class Application {
     System.out.println("!!! PREFLIGHT DISABLED !!!");
   }
 
-	public static void determineRealizationOrder(Sidecar2 scf) {
-		System.out.println("--- Determine order to parse the files (dependencies first) ---");
-		List<String> relOrder = scf.getRealizationOrder();		relOrder.stream().forEach(s -> System.out.println(s));
-	}
+  public static void determineRealizationOrder(Sidecar2 scf) {
+  }
 }

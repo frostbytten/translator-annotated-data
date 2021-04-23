@@ -1,17 +1,31 @@
 plugins {
-	id 'application'
+    id 'application'
 }
 
 ext {
-	javaMainClass = 'org.agmip.translators.annotated.app.Application'
+    javaMainClass = 'org.agmip.translators.annotated.app.Application'
 }
 
 dependencies {
-	implementation projects.translator
-	implementation libs.bundles.jackson
-	implementation libs.logback
+    implementation projects.translator
+    implementation libs.bundles.jackson
+    implementation libs.logback
 }
 
 application {
-	mainClass = javaMainClass
+    mainClass = javaMainClass
+}
+
+spotless {
+    format 'misc', {
+        target '*.gradle'
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+    }
+    java {
+        removeUnusedImports()
+        googleJavaFormat()
+        importOrder('java', 'javax', '')
+    }
 }

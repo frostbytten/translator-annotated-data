@@ -1,35 +1,53 @@
 plugins {
-	id 'java-library'
-	id 'groovy'
+    id 'java-library'
+    id 'groovy'
 }
 
 compileJava {
-	options.compilerArgs += '-Xlint:all'
+    options.compilerArgs += '-Xlint:all'
 }
 
 compileTestJava {
-	options.compilerArgs += '-parameters'
-	options.encoding = 'UTF-8'
+    options.compilerArgs += '-parameters'
+    options.encoding = 'UTF-8'
 }
 
 dependencies {
-	implementation libs.bundles.jackson
-	implementation libs.logback
-	implementation libs.jgrapht.core
-	implementation "org.agmip.ace:ace-core:2.1.5-SNAPSHOT"
-	implementation "org.codehaus.groovy:groovy:3.0.8"
-	implementation "com.opencsv:opencsv:5.4"
-	testImplementation platform("org.spockframework:spock-bom:2.0-groovy-3.0")
-	testImplementation "org.spockframework:spock-core"
-	testImplementation libs.bundles.junit
-	testImplementation "com.google.jimfs:jimfs:1.2"
-	testRuntimeOnly libs.junit.engine
+    implementation platform("org.agmip.bom:agmip-bom:2.2.0-SNAPSHOT")
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "ch.qos.logback:logback-classic"
+    //implementation libs.bundles.jackson
+    //implementation libs.logback
+    implementation libs.jgrapht.core
+    implementation "org.agmip.ace:ace-core:2.2.0-SNAPSHOT"
+    implementation "com.opencsv:opencsv:5.4"
+
+    testImplementation "org.codehaus.groovy:groovy:3.0.8"
+    testImplementation platform("org.spockframework:spock-bom:2.0-groovy-3.0")
+    testImplementation "org.spockframework:spock-core"
+    testImplementation libs.bundles.junit
+    testImplementation "com.google.jimfs:jimfs:1.2"
+    testRuntimeOnly libs.junit.engine
 }
 
 test {
-	useJUnitPlatform()
-	testLogging {
-		events "FAILED", "STANDARD_ERROR"
-		//events "PASSED", "FAILED", "SKIPPED", "STANDARD_OUT", "STANDARD_ERROR"
-	}
+    useJUnitPlatform()
+    testLogging {
+        //events "FAILED", "STANDARD_ERROR"
+        events "PASSED", "FAILED", "SKIPPED", "STANDARD_OUT", "STANDARD_ERROR"
+    }
+}
+
+spotless {
+    format 'misc', {
+        target '*.gradle'
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+    }
+    java {
+        removeUnusedImports()
+        googleJavaFormat()
+        importOrder('java', 'javax', '')
+    }
 }
