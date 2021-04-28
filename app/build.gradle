@@ -7,9 +7,11 @@ ext {
 }
 
 dependencies {
+    implementation platform("org.agmip.bom:agmip-bom:2.2.0-SNAPSHOT")
     implementation projects.translator
-    implementation libs.bundles.jackson
-    implementation libs.logback
+    implementation "ch.qos.logback:logback-classic"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "org.agmip.ace:ace-core:2.2.0-SNAPSHOT"
 }
 
 application {

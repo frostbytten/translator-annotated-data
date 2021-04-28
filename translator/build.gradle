@@ -16,12 +16,10 @@ dependencies {
     implementation platform("org.agmip.bom:agmip-bom:2.2.0-SNAPSHOT")
     implementation "com.fasterxml.jackson.core:jackson-databind"
     implementation "ch.qos.logback:logback-classic"
-    //implementation libs.bundles.jackson
-    //implementation libs.logback
     implementation libs.jgrapht.core
     implementation "org.agmip.ace:ace-core:2.2.0-SNAPSHOT"
     implementation "com.opencsv:opencsv:5.4"
-
+    implementation "io.vavr:vavr:0.10.3:"
     testImplementation "org.codehaus.groovy:groovy:3.0.8"
     testImplementation platform("org.spockframework:spock-bom:2.0-groovy-3.0")
     testImplementation "org.spockframework:spock-core"

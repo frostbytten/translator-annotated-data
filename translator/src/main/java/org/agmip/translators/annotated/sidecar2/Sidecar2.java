@@ -9,6 +9,7 @@ import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
 import org.agmip.translators.annotated.sidecar2.resolve.DataRegistry;
 
 public class Sidecar2 {
+  private final String _self;
   private final List<Sc2FileReference> _validFiles;
   private final List<Sc2FileReference> _invalidFiles;
   private final List<Sc2Relation> _validRelations;
@@ -19,7 +20,8 @@ public class Sidecar2 {
   private final boolean _allRelationsValid;
   private final boolean _anyRelationsValid;
 
-  public Sidecar2(List<Sc2FileReference> files, List<Sc2Relation> relations) {
+  public Sidecar2(String self, List<Sc2FileReference> files, List<Sc2Relation> relations) {
+    _self = self;
     _validFiles = files.stream().filter(Sc2FileReference::isValid).collect(Collectors.toList());
     _invalidFiles = files.stream().filter(f -> !f.isValid()).collect(Collectors.toList());
     _validRelations = relations.stream().filter(Sc2Relation::isValid).collect(Collectors.toList());
@@ -30,6 +32,8 @@ public class Sidecar2 {
     _anyRelationsValid = (_validRelations.size() > 0);
     _valid = _allFilesValid && _allRelationsValid;
   }
+
+  public String self() { return _self; }
 
   public List<Sc2FileReference> files() {
     return _validFiles;

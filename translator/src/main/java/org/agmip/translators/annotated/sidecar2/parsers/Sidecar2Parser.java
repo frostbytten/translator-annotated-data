@@ -17,26 +17,26 @@ import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
 public class Sidecar2Parser {
   public static Sidecar2 parse(String json) throws IOException, JsonProcessingException {
     JsonNode root = mapper.readTree(json);
-    return _parse(root);
+    return _parse("INTERNAL JSON STRING", root);
   }
 
   public static Sidecar2 parse(JsonNode json) throws IOException, JsonProcessingException {
-    return _parse(json);
+    return _parse("INTERNAL JSON NODE", json);
   }
 
   public static Sidecar2 parse(File json) throws IOException, JsonProcessingException {
     JsonNode root = mapper.readTree(json);
-    return _parse(root);
+    return _parse(json.getAbsolutePath(), root);
   }
 
   public static Sidecar2 parse(Reader json) throws IOException, JsonProcessingException {
     JsonNode root = mapper.readTree(json);
-    return _parse(root);
+    return _parse("INTERNAL READER", root);
   }
 
-  private static Sidecar2 _parse(JsonNode root) {
+  private static Sidecar2 _parse(String self, JsonNode root) {
     List<Sc2FileReference> _files = FilesParser.parse(root.path(ATM_FIELD).path(FILES_FIELD));
     List<Sc2Relation> _relations = RelationsParser.parse(root.path(ATM_FIELD).path(REL_FIELD));
-    return new Sidecar2(_files, _relations);
+    return new Sidecar2(self, _files, _relations);
   }
 }
