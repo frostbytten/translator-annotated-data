@@ -2,7 +2,7 @@ package test.samples;
 
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.*;
 import static org.agmip.translators.annotated.sidecar2.Utilities.mapper;
-import static org.agmip.translators.annotated.sidecar2.functions.Sc2Example.EXAMPLE_FUN_ARG;
+import static org.agmip.translators.annotated.sidecar2.functions.Sc2ExampleValidator.EXAMPLE_FUN_ARG;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

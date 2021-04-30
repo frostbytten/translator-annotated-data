@@ -1,5 +1,10 @@
 package org.agmip.translators.annotated.sidecar2.components;
 
+import io.vavr.control.Validation;
+import org.agmip.translators.annotated.sidecar2.functions.Sc2Function;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class Sc2Rule {
@@ -19,7 +24,7 @@ public class Sc2Rule {
   private final String _value;
   private final String _format;
   private final RuleType _ruleType;
-  private final Sc2Formula _formula;
+  private final Validation<String, ? extends Sc2Function> _function;
   private boolean valid;
 
   public Sc2Rule(
@@ -29,24 +34,24 @@ public class Sc2Rule {
       Integer category,
       String value,
       String format,
-      Sc2Formula formula) {
+      Validation<String, ? extends Sc2Function> function) {
     this._icasa = icasa;
     this._unit = unit;
     this._index = index == null ? -1 : index;
     this._category = category == null ? -1 : category;
     this._format = format;
     this._value = value;
-    this._formula = formula;
+    this._function = function;
     if (this._index == -1) {
       if (this._value != null) {
         this._ruleType = RuleType.VALUE_RULE;
-      } else if (this._formula != null) {
+      } else if (this._function != null) {
         this._ruleType = RuleType.FORMULA_RULE;
       } else {
         this._ruleType = RuleType.EXTRACTION_RULE;
       }
     } else {
-      if (this._formula != null) {
+      if (this._function != null) {
         this._ruleType = RuleType.FILL_WITH_FORMULA_RULE;
       } else {
         this._ruleType = RuleType.EXTRACTION_RULE;
@@ -83,8 +88,8 @@ public class Sc2Rule {
     return Optional.ofNullable(_format);
   }
 
-  public Optional<Sc2Formula> getFormula() {
-    return Optional.ofNullable(_formula);
+  public Optional<Sc2Function> getFormula() {
+    return Optional.ofNullable(_function.getOrElse(() -> null));
   }
 
   public boolean isValid() {
@@ -96,8 +101,10 @@ public class Sc2Rule {
   }
 
   private boolean validate() {
+    List<String> reasons = new ArrayList<>();
     boolean validated = _icasa != null;
     if ((_ruleType == RuleType.EXTRACTION_RULE) && (getColumnIndex() < 0)) {
+
       validated = false;
     }
     if (_category < -1) {

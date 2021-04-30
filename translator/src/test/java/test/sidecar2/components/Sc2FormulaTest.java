@@ -7,7 +7,8 @@ import static test.samples.Sidecar2SampleKeys.*;
 
 import java.util.List;
 
-import org.agmip.translators.annotated.sidecar2.components.Sc2Formula;
+import io.vavr.control.Validation;
+import org.agmip.translators.annotated.sidecar2.functions.Sc2Function;
 import org.agmip.translators.annotated.sidecar2.parsers.FormulaParser;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -36,16 +37,16 @@ public class Sc2FormulaTest {
   @ParameterizedTest
   @MethodSource("providesFormulas")
   void checkFormulaValidity(FormulaCheck formula) {
-    Sc2Formula fc = FormulaParser.parse(formula.json);
+    Validation<String, ? extends Sc2Function> fc = FormulaParser.parse(formula.json);
     assertThat(fc.isValid()).isEqualTo(formula.checker.valid);
   }
 
   @ParameterizedTest
   @MethodSource("providesFormulas")
   void checkFormulaFunctionOutput(FormulaCheck formula) {
-    Sc2Formula fc = FormulaParser.parse(formula.json);
+    Validation<String, ? extends Sc2Function> fc = FormulaParser.parse(formula.json);
     assumeThat(fc.isValid()).isTrue();
-    assertThat(fc.function().get().buildString()).isEqualTo(FORMA_FINAL_ANS);
+    assertThat(fc.get().buildString()).isEqualTo(FORMA_FINAL_ANS);
   }
 
   private static List<Arguments> providesFormulas() {

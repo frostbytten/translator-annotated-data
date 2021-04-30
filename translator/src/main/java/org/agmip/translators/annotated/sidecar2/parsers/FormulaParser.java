@@ -1,12 +1,14 @@
 package org.agmip.translators.annotated.sidecar2.parsers;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Formula;
+import io.vavr.control.Validation;
+import org.agmip.translators.annotated.sidecar2.functions.Sc2Function;
+import org.agmip.translators.annotated.sidecar2.validators.Sc2FormulaValidator;
 
 public class FormulaParser {
-  public static Sc2Formula parse(JsonNode json) {
+  public static Validation<String, ? extends Sc2Function> parse(JsonNode json) {
     String fun = json.path("function").asText();
     JsonNode args = json.path("args");
-    return new Sc2Formula(fun, args);
+    return new Sc2FormulaValidator().validateFormula(fun, args);
   }
 }

@@ -1,8 +1,8 @@
 package test.functions;
 
 import static org.agmip.translators.annotated.sidecar2.Utilities.mapper;
-import static org.agmip.translators.annotated.sidecar2.functions.Sc2JoinColumns.JC_VD;
-import static org.agmip.translators.annotated.sidecar2.functions.Sc2JoinColumns.JC_VVK;
+import static org.agmip.translators.annotated.sidecar2.functions.Sc2JoinColumnsValidator.JC_VD;
+import static org.agmip.translators.annotated.sidecar2.functions.Sc2JoinColumnsValidator.JC_VVK;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -12,7 +12,9 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.functions.Sc2JoinColumns;
+import org.agmip.translators.annotated.sidecar2.functions.Sc2JoinColumnsValidator;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -49,15 +51,18 @@ public class Sc2JoinColumnsTest {
   @ParameterizedTest
   @MethodSource("providesArgs")
   public void correctlyValidateArguments(Check args) {
-    Sc2JoinColumns fun = new Sc2JoinColumns(args.json);
-    assertThat(fun.isValid()).isEqualTo(args.checker.valid);
+    Sc2JoinColumnsValidator jcv = new Sc2JoinColumnsValidator();
+    Validation<String, Sc2JoinColumns> res = jcv.validate(args.json);
+    assertThat(res.isValid()).isEqualTo(args.checker.valid);
   }
 
   @ParameterizedTest
   @MethodSource("providesArgs")
   public void generatingCorrectBuildString(Check args) {
-    Sc2JoinColumns fun = new Sc2JoinColumns(args.json);
-    assumeThat(fun.isValid()).isTrue();
+    Sc2JoinColumnsValidator jcv = new Sc2JoinColumnsValidator();
+    Validation<String, Sc2JoinColumns> res = jcv.validate(args.json);
+    assumeThat(res.isValid()).isTrue();
+    Sc2JoinColumns fun = res.get();
     assumeThat(fun.getJoiner()).isEqualTo("-");
     assumeThat(fun.getColumns()).hasSize(3);
     assertThat(fun.buildString()).isEqualTo(JC_VALID_BUILD);
@@ -66,8 +71,10 @@ public class Sc2JoinColumnsTest {
   @ParameterizedTest
   @MethodSource("providesArgs")
   public void generatingCorrectBuildString2(Check args) {
-    Sc2JoinColumns fun = new Sc2JoinColumns(args.json);
-    assumeThat(fun.isValid()).isTrue();
+    Sc2JoinColumnsValidator jcv = new Sc2JoinColumnsValidator();
+    Validation<String, Sc2JoinColumns> res = jcv.validate(args.json);
+    assumeThat(res.isValid()).isTrue();
+    Sc2JoinColumns fun = res.get();
     assumeThat(fun.getJoiner()).isEqualTo("-");
     assumeThat(fun.getColumns()).hasSize(4);
     assertThat(fun.buildString()).isEqualTo(JC_VALID_BUILD2);
@@ -76,8 +83,10 @@ public class Sc2JoinColumnsTest {
   @ParameterizedTest
   @MethodSource("providesArgs")
   public void generatingCorrectBuildString3(Check args) {
-    Sc2JoinColumns fun = new Sc2JoinColumns(args.json);
-    assumeThat(fun.isValid()).isTrue();
+    Sc2JoinColumnsValidator jcv = new Sc2JoinColumnsValidator();
+    Validation<String, Sc2JoinColumns> res = jcv.validate(args.json);
+    assumeThat(res.isValid()).isTrue();
+    Sc2JoinColumns fun = res.get();
     assumeThat(fun.getJoiner()).isEqualTo(" ");
     assertThat(fun.buildString()).isEqualTo(JC_VALID_BUILD3);
   }
