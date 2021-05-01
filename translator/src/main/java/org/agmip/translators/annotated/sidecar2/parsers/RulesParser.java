@@ -5,16 +5,19 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Rule;
 
 public class RulesParser {
-  public static List<Sc2Rule> parse(JsonNode rulesNode) {
-    List<Sc2Rule> entries = new ArrayList<>();
+  public static List<Validation<Seq<String>, Sc2Rule>> parse(JsonNode rulesNode) {
+    List<Validation<Seq<String>, Sc2Rule>> entries = new ArrayList<>();
     Iterator<JsonNode> rules = rulesNode.elements();
     while (rules.hasNext()) {
       JsonNode rule = rules.next();
       if (!rule.isMissingNode()) {
-        entries.add(RuleParser.parse(rule));
+        Validation<Seq<String>, Sc2Rule> ruleVal = RuleParser.parse(rule);
+        entries.add(ruleVal);
       }
     }
     return entries;

@@ -8,6 +8,8 @@ import static test.samples.Sidecar2SampleKeys.*;
 import java.util.List;
 import java.util.Optional;
 
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Rule;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Rule.RuleType;
 import org.agmip.translators.annotated.sidecar2.parsers.RuleParser;
@@ -74,14 +76,16 @@ public class Sc2RuleTest {
   @ParameterizedTest
   @MethodSource("providesRules")
   void rulesShouldValidate(RuleCheck rule) {
-    Sc2Rule rc = RuleParser.parse(rule.json);
+    Validation<Seq<String>, Sc2Rule> rc = RuleParser.parse(rule.json);
     assertThat(rc.isValid()).isEqualTo(rule.checker.valid);
   }
 
   @ParameterizedTest
   @MethodSource("providesRules")
   void rulesShouldExposeFields(RuleCheck rule) {
-    Sc2Rule rc = RuleParser.parse(rule.json);
+    Validation<Seq<String>, Sc2Rule> rcv = RuleParser.parse(rule.json);
+    assumeThat(rcv.isValid()).isTrue();
+    Sc2Rule rc = rcv.get();
     assertThat(rc.getVariable()).isEqualTo(rule.checker.icasa);
     if (rule.checker.columnIndex == null) {
       assertThat(rc.getColumnIndex()).isEqualTo(-1);
@@ -109,7 +113,9 @@ public class Sc2RuleTest {
   @ParameterizedTest
   @MethodSource("providesRules")
   void valueOnlyRulesShouldHaveValueRuleType(RuleCheck rule) {
-    Sc2Rule rc = RuleParser.parse(rule.json);
+    Validation<Seq<String>, Sc2Rule> rcv = RuleParser.parse(rule.json);
+    assumeThat(rcv.isValid()).isTrue();
+    Sc2Rule rc = rcv.get();
     assumeThat(rc.getColumnIndex()).isEqualTo(-1);
     assumeThat(rc.getValue()).isNotEmpty();
     assertThat(rc.getRuleType()).isEqualTo(RuleType.VALUE_RULE);
@@ -118,7 +124,9 @@ public class Sc2RuleTest {
   @ParameterizedTest
   @MethodSource("providesRules")
   void allOtherRulesShouldHaveExtractionRuleType(RuleCheck rule) {
-    Sc2Rule rc = RuleParser.parse(rule.json);
+    Validation<Seq<String>, Sc2Rule> rcv = RuleParser.parse(rule.json);
+    assumeThat(rcv.isValid()).isTrue();
+    Sc2Rule rc = rcv.get();
     assumeThat(rc.getColumnIndex()).isNotEqualTo(-1);
     assertThat(rc.getRuleType()).isEqualTo(RuleType.EXTRACTION_RULE);
   }

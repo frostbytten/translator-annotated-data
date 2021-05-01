@@ -1,11 +1,7 @@
 package org.agmip.translators.annotated.sidecar2.functions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 public class Sc2JoinColumns implements Sc2Function {
   private final List<Integer> valueColumns;

@@ -22,9 +22,16 @@ public class FilesTest {
               mapper
                   .createArrayNode()
                   .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.csvFull.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.xlsxFull.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.xlsxFileOnly.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.xlsxUrlOnly.json)));
+                  .add(
+                      mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.xlsxFull.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.xlsxFileOnly.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.xlsxUrlOnly.json)));
 
   public static JsonNode filesAllBad =
       mapper
@@ -33,9 +40,18 @@ public class FilesTest {
               FILES_FIELD,
               mapper
                   .createArrayNode()
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.fileEmpty.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidCT.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidFileAndUrl.json)));
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.fileEmpty.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidCT.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidFileAndUrl.json)));
 
   public static JsonNode filesSomeGood =
       mapper
@@ -45,10 +61,20 @@ public class FilesTest {
               mapper
                   .createArrayNode()
                   .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.csvFull.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.xlsxFull.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.fileEmpty.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidCT.json))
-                  .add(mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidFileAndUrl.json)));
+                  .add(
+                      mapper.createObjectNode().set(FILE_FIELD, Sc2FileReferenceTest.xlsxFull.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.fileEmpty.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidCT.json))
+                  .add(
+                      mapper
+                          .createObjectNode()
+                          .set(FILE_FIELD, Sc2FileReferenceTest.fileInvalidFileAndUrl.json)));
 
   public static int BAD_FILES_COUNT = 3;
   public static int GOOD_FILES_COUNT = 4;

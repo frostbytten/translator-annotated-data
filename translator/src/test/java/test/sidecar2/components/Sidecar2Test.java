@@ -19,9 +19,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class Sidecar2Test {
-  public static JsonNode allGoodSc2 = mapper.createObjectNode().set(ATM_FIELD, FilesTest.filesAllGood);
-  public static JsonNode allBadSc2 = mapper.createObjectNode().set(ATM_FIELD, FilesTest.filesAllBad);
-  public static JsonNode mixedSc2 = mapper.createObjectNode().set(ATM_FIELD, FilesTest.filesSomeGood);
+  public static JsonNode allGoodSc2 =
+      mapper.createObjectNode().set(ATM_FIELD, FilesTest.filesAllGood);
+  public static JsonNode allBadSc2 =
+      mapper.createObjectNode().set(ATM_FIELD, FilesTest.filesAllBad);
+  public static JsonNode mixedSc2 =
+      mapper.createObjectNode().set(ATM_FIELD, FilesTest.filesSomeGood);
   private static Path workDir;
 
   @BeforeAll

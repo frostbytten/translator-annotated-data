@@ -1,5 +1,7 @@
 package org.agmip.translators.annotated;
 
+import static io.vavr.API.*;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -14,13 +16,9 @@ import org.agmip.translators.annotated.sidecar2.parsers.*;
 import org.agmip.translators.interfaces.IInputTranslator;
 import org.agmip.translators.interfaces.WithWorkDir;
 
-import static io.vavr.API.*;
-
 public class Sc2Translator implements IInputTranslator, WithWorkDir {
   private final List<String> _filenames;
   private Path _workingDir;
-
-
 
   public Sc2Translator() {
     _filenames = new ArrayList<>();
@@ -43,8 +41,13 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       return null;
     }
     System.out.println("-- Stage 1: Validating Sidecar2 Files");
-    List<Either<String, Path>> sidecar2Files = _filenames.stream().map(this::realizePath).collect(Collectors.toList());
-    List<String> missingFiles = sidecar2Files.stream().filter(Either::isLeft).map(Either::getLeft).collect(Collectors.toList());
+    List<Either<String, Path>> sidecar2Files =
+        _filenames.stream().map(this::realizePath).collect(Collectors.toList());
+    List<String> missingFiles =
+        sidecar2Files.stream()
+            .filter(Either::isLeft)
+            .map(Either::getLeft)
+            .collect(Collectors.toList());
     // TODO Add customized API logging facilities to return errors
     if (missingFiles.size() > 0) {
       missingFiles.forEach(System.err::println);
@@ -53,26 +56,28 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       System.err.println("No files found to process.");
       return null;
     }
-    List<Sidecar2> sidecars = sidecar2Files
-      .stream()
-      .filter(Either::isRight)
-      .map(f -> {
-        try {
-          return Sidecar2Parser.parse(f.get().toFile());
-        } catch (IOException ex) {
-          System.err.println("IO Error ["+f.get()+"]: " + ex.getMessage());
-          return null;
-        }
-      })
-      .filter(Objects::nonNull).collect(Collectors.toList());
+    List<Sidecar2> sidecars =
+        sidecar2Files.stream()
+            .filter(Either::isRight)
+            .map(
+                f -> {
+                  try {
+                    return Sidecar2Parser.parse(f.get().toFile());
+                  } catch (IOException ex) {
+                    System.err.println("IO Error [" + f.get() + "]: " + ex.getMessage());
+                    return null;
+                  }
+                })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     if (sidecars.size() == 0) {
       System.err.println("Could not parse any SC2 files.");
       return null;
     }
-    System.out.println("\t[" + sidecars.size() + "/"+ sidecar2Files.size() + "] SC2 files parsable.");
-    sidecars.forEach(sc -> {
+    System.out.println(
+        "\t[" + sidecars.size() + "/" + sidecar2Files.size() + "] SC2 files parsable.");
+    sidecars.forEach(sc -> {});
 
-    });
     return new AceDataset();
   }
 
@@ -91,7 +96,7 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
     if (Files.isReadable(rp)) {
       return Either.right(rp);
     } else {
-      return Either.left("Unable to open file: "+rp);
+      return Either.left("Unable to open file: " + rp);
     }
   }
 

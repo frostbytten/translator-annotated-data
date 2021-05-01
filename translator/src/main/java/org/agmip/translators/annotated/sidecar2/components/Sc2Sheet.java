@@ -18,14 +18,14 @@ public class Sc2Sheet {
   private final List<Sc2Rule> _rules;
   private boolean valid;
 
-	public Sc2Sheet(String name, Integer dsr, Integer der, List<Sc2Rule> rules, String context) {
-		this._name = name;
-		this._dsr = dsr == null ? 0 : dsr;
-		this._der = der == null ? -1 : der;
-		this._context = context;
-		this._rules = rules;
-		this.valid = validate();
-	}
+  public Sc2Sheet(String name, Integer dsr, Integer der, List<Sc2Rule> rules, String context) {
+    this._name = name;
+    this._dsr = dsr == null ? 0 : dsr;
+    this._der = der == null ? -1 : der;
+    this._context = context;
+    this._rules = rules;
+    this.valid = validate();
+  }
 
   public Optional<String> getName() {
     return Optional.ofNullable(_name);

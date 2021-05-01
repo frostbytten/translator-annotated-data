@@ -3,13 +3,11 @@ package org.agmip.translators.annotated.app;
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.SUPPORTED_MIME;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 import org.agmip.translators.annotated.*;
 import org.agmip.translators.annotated.sidecar2.Sidecar2;
@@ -35,9 +33,9 @@ public class Application {
     tr.setWorkDirectory(workDir);
     tr.addFile(sc2Path);
     tr.translate();
-//    preflightSC2Files(sc2, workDir);
-//    Sidecar2 sc2 = processSC2(sc2Path);
-//    determineRealizationOrder(sc2);
+    //    preflightSC2Files(sc2, workDir);
+    //    Sidecar2 sc2 = processSC2(sc2Path);
+    //    determineRealizationOrder(sc2);
   }
 
   private static List<Sc2Sheet> validSheets(List<Sc2Sheet> allSheets) {
@@ -48,7 +46,8 @@ public class Application {
     return allRules.stream().filter(Sc2Rule::isValid).collect(Collectors.toList());
   }
 
-  public static Sidecar2 processSC2(Path sc2Path) throws IOException { //}, JsonProcessingException {
+  public static Sidecar2 processSC2(Path sc2Path)
+      throws IOException { // }, JsonProcessingException {
     System.out.println(sc2Path.toFile());
     Sidecar2 sc2 = Sidecar2Parser.parse(sc2Path.toFile());
     System.out.println("--- PARSING SC2 File ---");
@@ -100,6 +99,5 @@ public class Application {
     System.out.println("!!! PREFLIGHT DISABLED !!!");
   }
 
-  public static void determineRealizationOrder(Sidecar2 scf) {
-  }
+  public static void determineRealizationOrder(Sidecar2 scf) {}
 }

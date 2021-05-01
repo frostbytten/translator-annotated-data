@@ -1,11 +1,10 @@
 package org.agmip.translators.annotated.sidecar2.components;
 
-import io.vavr.control.Validation;
-import org.agmip.translators.annotated.sidecar2.functions.Sc2Function;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.agmip.translators.annotated.sidecar2.functions.Sc2Function;
 
 public class Sc2Rule {
   public enum RuleType {
@@ -24,7 +23,7 @@ public class Sc2Rule {
   private final String _value;
   private final String _format;
   private final RuleType _ruleType;
-  private final Validation<String, ? extends Sc2Function> _function;
+  private final Sc2Function _function;
   private boolean valid;
 
   public Sc2Rule(
@@ -34,7 +33,7 @@ public class Sc2Rule {
       Integer category,
       String value,
       String format,
-      Validation<String, ? extends Sc2Function> function) {
+      Sc2Function function) {
     this._icasa = icasa;
     this._unit = unit;
     this._index = index == null ? -1 : index;
@@ -89,7 +88,7 @@ public class Sc2Rule {
   }
 
   public Optional<Sc2Function> getFormula() {
-    return Optional.ofNullable(_function.getOrElse(() -> null));
+    return Optional.ofNullable(_function);
   }
 
   public boolean isValid() {

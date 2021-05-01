@@ -3,6 +3,8 @@ package org.agmip.translators.annotated.sidecar2;
 import java.util.Comparator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.control.Try;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Rule;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 
@@ -20,6 +22,11 @@ public enum Utilities {
       // Log the error
     }
     return retval;
+  }
+
+  public static Validation<String, Integer> tryStringToInteger(String val, String context) {
+    return Try.of(() -> Integer.valueOf(val))
+        .toValidation(() -> context + " is not a valid number.");
   }
 
   public static int getMaxSheetColumn(Sc2Sheet sheet) {
