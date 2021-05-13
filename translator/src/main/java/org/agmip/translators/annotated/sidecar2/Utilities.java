@@ -1,6 +1,7 @@
 package org.agmip.translators.annotated.sidecar2;
 
 import java.util.Comparator;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Try;
@@ -14,17 +15,13 @@ public enum Utilities {
       Comparator.comparing(Sc2Rule::getColumnIndex);
   public static final ObjectMapper mapper = new ObjectMapper();
 
-  public static Integer convertStringToInteger(String val) {
-    Integer retval = null;
-    try {
-      retval = Integer.valueOf(val);
-    } catch (NumberFormatException _ex) {
-      // Log the error
-    }
-    return retval;
+  public static Validation<String, Integer> tryStringToInteger(String val, String context) {
+    return tryStringToInteger(val, context, -1);
   }
 
-  public static Validation<String, Integer> tryStringToInteger(String val, String context) {
+  public static Validation<String, Integer> tryStringToInteger(
+      String val, String context, int defaultVal) {
+    if (Objects.isNull(val)) return Validation.valid(defaultVal);
     return Try.of(() -> Integer.valueOf(val))
         .toValidation(() -> context + " is not a valid number.");
   }

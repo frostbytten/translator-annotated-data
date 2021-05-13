@@ -20,8 +20,10 @@ public class Sc2SheetValidator {
       String dataEndRow,
       List<Validation<Seq<String>, Sc2Rule>> rules,
       String fileType) {
-    Validation<String, Integer> dsr = tryStringToInteger(dataStartRow, SDSR_FIELD);
-    Validation<String, Integer> der = tryStringToInteger(dataEndRow, SDER_FIELD);
+    Validation<String, Integer> dsr =
+        validateLowerBounds(tryStringToInteger(dataStartRow, SDSR_FIELD), SDSR_FIELD);
+    Validation<String, Integer> der =
+        validateLowerBounds(tryStringToInteger(dataEndRow, SDER_FIELD), SDER_FIELD);
     return Validation.combine(
             validateName(name, fileType), dsr, validateOrder(dsr, der), Validation.valid(rules))
         .ap(Sc2Sheet::new);
@@ -33,18 +35,19 @@ public class Sc2SheetValidator {
         : Validation.valid(name);
   }
 
+  private Validation<String, Integer> validateLowerBounds(
+      Validation<String, Integer> dr, String context) {
+    if (dr.isInvalid()) return dr;
+    return dr.get() < -1 ? Validation.invalid(context + "(" + dr.get() + ") is less than 0.") : dr;
+  }
+
   private Validation<String, Integer> validateOrder(
       Validation<String, Integer> dsr, Validation<String, Integer> der) {
     if (dsr.isInvalid() || der.isInvalid()) return der;
     int _dsr = dsr.get();
     int _der = der.get();
-    if (_der == -1) {
-      return _der < _dsr
-          ? Validation.invalid(
-              "data_end_row must(" + _der + " be after data_start_row" + _dsr + ".")
-          : der;
-    } else {
-      return der;
-    }
+    return _der < _dsr
+        ? Validation.invalid("data_end_row must(" + _der + " be after data_start_row" + _dsr + ".")
+        : der;
   }
 }

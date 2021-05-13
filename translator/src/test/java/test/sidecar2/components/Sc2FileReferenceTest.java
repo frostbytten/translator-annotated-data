@@ -6,9 +6,12 @@ import static test.samples.FileGenerator.FileCheck;
 import static test.samples.FileGenerator.FileCheckBuilder;
 import static test.samples.Sidecar2SampleKeys.*;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.parsers.FileParser;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,30 +57,34 @@ public class Sc2FileReferenceTest {
     return provider;
   }
 
+  private static Path workDir = Path.of("tmp", "sc2frt");
+
   @ParameterizedTest
   @MethodSource("providesFiles")
   void shouldValidateFileMetadata(FileCheck file) throws JsonProcessingException {
-    Sc2FileReference fe = FileParser.parse(file.json);
-    assertThat(fe.isValid()).isEqualTo(file.checker.valid);
+    Validation<Seq<String>, Sc2FileReference> fev = FileParser.parse(file.json, workDir);
+    assertThat(fev.isValid()).isEqualTo(file.checker.valid);
   }
 
   @ParameterizedTest
   @MethodSource("providesFiles")
   void shouldBeAbleToExtractFileNames(FileCheck file) throws JsonProcessingException {
-    Sc2FileReference fe = FileParser.parse(file.json);
-    assumeThat(fe.isValid()).isTrue();
-    assumeThat(fe.getUrl()).isEmpty();
-    assertThat(fe.getName().orElse("FAILED")).isEqualTo(file.checker.name);
+    Validation<Seq<String>, Sc2FileReference> fev = FileParser.parse(file.json, workDir);
+    assumeThat(fev.isValid()).isTrue();
+    Sc2FileReference fe = fev.get();
+    assumeThat(fe.location().getScheme()).isEqualTo("file");
+    assertThat(Path.of(fe.location()).getFileName().toString()).isEqualTo(file.checker.name);
     assertThat(fe.getContentType()).isEqualTo(file.checker.contentType);
   }
 
   @ParameterizedTest
   @MethodSource("providesFiles")
   void canExtractUrls(FileCheck file) throws JsonProcessingException {
-    Sc2FileReference fe = FileParser.parse(file.json);
-    assumeThat(fe.isValid()).isTrue();
-    assumeThat(fe.getUrl()).isNotEmpty();
-    assertThat(fe.getUrl().get()).isEqualTo(file.checker.url);
+    Validation<Seq<String>, Sc2FileReference> fev = FileParser.parse(file.json, workDir);
+    assumeThat(fev.isValid()).isTrue();
+    Sc2FileReference fe = fev.get();
+    assumeThat(file.checker.url).isNotNull();
+    assertThat(fe.location().toString()).isEqualTo(file.checker.url);
     assertThat(fe.getContentType()).isEqualTo(file.checker.contentType);
   }
 }

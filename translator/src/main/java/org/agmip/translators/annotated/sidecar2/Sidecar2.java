@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
 
@@ -19,13 +21,20 @@ public class Sidecar2 {
   private final boolean _allRelationsValid;
   private final boolean _anyRelationsValid;
 
-  public Sidecar2(String self, List<Sc2FileReference> files, List<Sc2Relation> relations) {
+  public Sidecar2(
+      String self,
+      List<Validation<Seq<String>, Sc2FileReference>> files,
+      List<Sc2Relation> relations) {
     _self = self;
-    _validFiles = files.stream().filter(Sc2FileReference::isValid).collect(Collectors.toList());
-    _invalidFiles = files.stream().filter(f -> !f.isValid()).collect(Collectors.toList());
+    _validFiles =
+        files.stream()
+            .filter(Validation::isValid)
+            .map(Validation::get)
+            .collect(Collectors.toList());
+    _invalidFiles = null;
     _validRelations = relations.stream().filter(Sc2Relation::isValid).collect(Collectors.toList());
     _invalidRelations = relations.stream().filter(r -> !r.isValid()).collect(Collectors.toList());
-    _allFilesValid = _invalidFiles.isEmpty();
+    _allFilesValid = _validFiles.size() == files.size();
     _anyFilesValid = (_validFiles.size() > 0);
     _allRelationsValid = _invalidRelations.isEmpty();
     _anyRelationsValid = (_validRelations.size() > 0);

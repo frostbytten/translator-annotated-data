@@ -78,7 +78,10 @@ public class Sc2SheetTest {
   @MethodSource("providesSheets")
   void sheetShouldBeInvalidIfDerBeforeDsr(SheetCheck sheet) {
     Validation<Seq<String>, Sc2Sheet> scv = SheetParser.parse(sheet.json, sheet.checker.context);
-    assumeThat(Objects.nonNull(sheet.checker.dataStartRow) && Objects.nonNull(sheet.checker.dataEndRow)).isTrue();
+    assumeThat(
+            Objects.nonNull(sheet.checker.dataStartRow)
+                && Objects.nonNull(sheet.checker.dataEndRow))
+        .isTrue();
     int dsr = sheet.checker.dataStartRow;
     int der = sheet.checker.dataEndRow;
     assumeThat(dsr).isGreaterThan(0);
@@ -91,7 +94,10 @@ public class Sc2SheetTest {
   @MethodSource("providesSheets")
   void sheetShouldBeValidIfDerAfterDsr(SheetCheck sheet) {
     Validation<Seq<String>, Sc2Sheet> scv = SheetParser.parse(sheet.json, sheet.checker.context);
-    assumeThat(Objects.nonNull(sheet.checker.dataStartRow) && Objects.nonNull(sheet.checker.dataEndRow)).isTrue();
+    assumeThat(
+            Objects.nonNull(sheet.checker.dataStartRow)
+                && Objects.nonNull(sheet.checker.dataEndRow))
+        .isTrue();
     int dsr = sheet.checker.dataStartRow;
     int der = sheet.checker.dataEndRow;
     assumeThat(dsr).isGreaterThan(0);
@@ -104,7 +110,10 @@ public class Sc2SheetTest {
   @MethodSource("providesSheets")
   void sheetShouldBeInvalidIfDsrLessThanDefault(SheetCheck sheet) {
     Validation<Seq<String>, Sc2Sheet> scv = SheetParser.parse(sheet.json, sheet.checker.context);
-    assumeThat(Objects.nonNull(sheet.checker.dataStartRow) && Objects.nonNull(sheet.checker.dataEndRow)).isTrue();
+    assumeThat(
+            Objects.nonNull(sheet.checker.dataStartRow)
+                && Objects.nonNull(sheet.checker.dataEndRow))
+        .isTrue();
     assumeThat(sheet.checker.dataStartRow).isLessThan(-1);
     assertThat(scv.isValid()).isFalse();
   }
@@ -113,7 +122,10 @@ public class Sc2SheetTest {
   @MethodSource("providesSheets")
   void sheetShouldBeInvalidIfDerLessThanDefault(SheetCheck sheet) {
     Validation<Seq<String>, Sc2Sheet> scv = SheetParser.parse(sheet.json, sheet.checker.context);
-    assumeThat(Objects.nonNull(sheet.checker.dataStartRow) && Objects.nonNull(sheet.checker.dataEndRow)).isTrue();
+    assumeThat(
+            Objects.nonNull(sheet.checker.dataStartRow)
+                && Objects.nonNull(sheet.checker.dataEndRow))
+        .isTrue();
     assumeThat(sheet.checker.dataEndRow).isLessThan(-1);
     assertThat(scv.isValid()).isFalse();
   }

@@ -62,7 +62,7 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
             .map(
                 f -> {
                   try {
-                    return Sidecar2Parser.parse(f.get().toFile());
+                    return Sidecar2Parser.parse(f.get().toFile(), _workingDir);
                   } catch (IOException ex) {
                     System.err.println("IO Error [" + f.get() + "]: " + ex.getMessage());
                     return null;
