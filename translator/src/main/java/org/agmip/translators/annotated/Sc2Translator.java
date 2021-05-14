@@ -1,23 +1,23 @@
 package org.agmip.translators.annotated;
 
-import static io.vavr.API.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.*;
-
-import com.fasterxml.jackson.core.*;
-import io.vavr.*;
-import io.vavr.control.*;
+import io.vavr.collection.List;
+import io.vavr.control.Try;
+import io.vavr.control.Validation;
 import org.agmip.ace.AceDataset;
 import org.agmip.translators.annotated.sidecar2.Sidecar2;
-import org.agmip.translators.annotated.sidecar2.parsers.*;
+import org.agmip.translators.annotated.sidecar2.components.ComponentState;
+import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
+import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
+import org.agmip.translators.annotated.sidecar2.parsers.Sidecar2Parser;
 import org.agmip.translators.interfaces.IInputTranslator;
 import org.agmip.translators.interfaces.WithWorkDir;
 
 public class Sc2Translator implements IInputTranslator, WithWorkDir {
-  private final List<String> _filenames;
+  private final java.util.List<String> _filenames;
   private Path _workingDir;
 
   public Sc2Translator() {
@@ -29,7 +29,7 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
     _filenames.add(file);
   }
 
-  public List<String> getInputFilenames() {
+  public java.util.List<String> getInputFilenames() {
     return _filenames;
   }
 
@@ -40,15 +40,12 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       System.err.println("Working directory not set.");
       return null;
     }
+    List<String> files = List.ofAll(_filenames);
     System.out.println("-- Stage 1: Validating Sidecar2 Files");
-    List<Either<String, Path>> sidecar2Files =
-        _filenames.stream().map(this::realizePath).collect(Collectors.toList());
-    List<String> missingFiles =
-        sidecar2Files.stream()
-            .filter(Either::isLeft)
-            .map(Either::getLeft)
-            .collect(Collectors.toList());
+    List<Validation<String, Path>> sidecar2Files = files.map(this::realizePath);
     // TODO Add customized API logging facilities to return errors
+    List<String> missingFiles =
+        sidecar2Files.filter(Validation::isInvalid).map(Validation::getError);
     if (missingFiles.size() > 0) {
       missingFiles.forEach(System.err::println);
     }
@@ -56,27 +53,22 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       System.err.println("No files found to process.");
       return null;
     }
-    List<Sidecar2> sidecars =
-        sidecar2Files.stream()
-            .filter(Either::isRight)
+    List<Validation<String, Sidecar2>> scv =
+        sidecar2Files
+            .filter(Validation::isValid)
             .map(
-                f -> {
-                  try {
-                    return Sidecar2Parser.parse(f.get().toFile(), _workingDir);
-                  } catch (IOException ex) {
-                    System.err.println("IO Error [" + f.get() + "]: " + ex.getMessage());
-                    return null;
-                  }
-                })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-    if (sidecars.size() == 0) {
+                f ->
+                    Try.of(() -> Sidecar2Parser.parse(f.get().toFile(), _workingDir))
+                        .toValidation(ex -> "IO Error [" + f.get() + "]:" + ex.getMessage()));
+    scv.filter(Validation::isInvalid).forEach(System.out::println);
+    if (scv.forAll(Validation::isInvalid)) {
       System.err.println("Could not parse any SC2 files.");
-      return null;
+      return new AceDataset();
     }
+    List<Sidecar2> sidecars = scv.filter(Validation::isValid).map(Validation::get);
     System.out.println(
-        "\t[" + sidecars.size() + "/" + sidecar2Files.size() + "] SC2 files parsable.");
-    sidecars.forEach(sc -> {});
+        "\t[" + sidecars.size() + "/" + sidecar2Files.size() + "] SC2 files were parsable.");
+    sidecars.forEach(this::checkSC2Validity);
 
     return new AceDataset();
   }
@@ -91,36 +83,101 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
     return _workingDir;
   }
 
-  private Either<String, Path> realizePath(String file) {
+  private Validation<String, Path> realizePath(String file) {
     Path rp = _workingDir.resolve(file);
     if (Files.isReadable(rp)) {
-      return Either.right(rp);
+      return Validation.valid(rp);
     } else {
-      return Either.left("Unable to open file: " + rp);
+      return Validation.invalid("Unable to open file: " + rp);
     }
   }
 
   private boolean checkSC2Validity(Sidecar2 sc) {
     System.out.println("\t-- Checking " + sc.self());
-    System.out.println("\t\t -- Fully validated: " + sc.isValid());
     if (sc.isValid()) {
+      System.out.println("\t\t -- Fully validated: " + sc.isValid());
       return true;
     }
-    System.out.println("\t\t -- All file entries valid: " + sc.areAllFilesValid());
-    if (!sc.areAllFilesValid()) {
-      System.out.println("\t\t -- Any file entries valid: " + sc.areAnyFilesValid());
-      if (!sc.areAnyFilesValid()) {
-        return false;
-      }
+
+    System.out.println(
+        "\t\t -- All file entries valid: " + (sc.fileState() == ComponentState.COMPLETE));
+    if (sc.fileState() != ComponentState.COMPLETE) {
+      System.out.println(
+          "\t\t -- Any file entries valid: " + (sc.fileState() == ComponentState.PARTIAL));
+      sc.rawFiles()
+          .forEachWithIndex(
+              (f, i) -> {
+                if (f.isValid()) {
+                  System.out.println("\t\t    " + i + ". valid");
+                  Sc2FileReference fr = f.get();
+                  System.out.println(
+                      "\t\t\t -- All sheet entries valid: "
+                          + (fr.sheetState() == ComponentState.COMPLETE));
+                  if (fr.sheetState() != ComponentState.COMPLETE) {
+                    System.out.println(
+                        "\t\t\t -- Any sheet entries valid: "
+                            + (fr.sheetState() == ComponentState.PARTIAL));
+                    fr.rawSheets()
+                        .forEachWithIndex(
+                            (s, si) -> {
+                              if (s.isValid()) {
+                                System.out.println("\t\t\t    " + si + ". valid");
+                                Sc2Sheet sr = s.get();
+                                System.out.println(
+                                    "\t\t\t\t -- All rules valid: "
+                                        + (sr.rulesState() == ComponentState.COMPLETE));
+                                if (sr.rulesState() != ComponentState.COMPLETE) {
+                                  System.out.println(
+                                      "\t\t\t\t -- Any rules valid: "
+                                          + (sr.rulesState() == ComponentState.PARTIAL));
+                                  sr.rawRules()
+                                      .forEachWithIndex(
+                                          (r, ri) -> {
+                                            if (r.isValid()) {
+                                              System.out.println("\t\t\t\t    " + ri + ". valid");
+                                            } else {
+                                              System.out.println("\t\t\t\t    " + ri + ". invalid");
+                                              r.getError()
+                                                  .forEach(
+                                                      reason ->
+                                                          System.out.println(
+                                                              "\t\t\t\t        - " + reason));
+                                            }
+                                          });
+                                }
+                              } else {
+                                System.out.println("\t\t\t    " + si + ". invalid");
+                                s.getError()
+                                    .forEach(
+                                        reason -> System.out.println("\t\t\t        - " + reason));
+                              }
+                            });
+                  }
+                } else {
+                  System.out.println("\t\t    " + i + ". invalid");
+                  f.getError().forEach(reason -> System.out.println("\t\t        - " + reason));
+                }
+              });
     }
-    System.out.println("\t\t -- All relations valid: " + sc.areAllRelationsValid());
-    if (!sc.areAllRelationsValid()) {
-      System.out.println("\t\t -- Any relations valid: " + sc.areAnyRelationsValid());
-      if (!sc.areAnyRelationsValid()) {
-        return false;
-      }
+
+    System.out.println(
+        "\t\t -- All relations valid: " + (sc.relationState() == ComponentState.COMPLETE));
+    if (sc.relationState() != ComponentState.COMPLETE) {
+      System.out.println(
+          "\t\t -- Any relations valid: " + (sc.relationState() == ComponentState.PARTIAL));
+      sc.rawRelations()
+          .forEachWithIndex(
+              (r, i) -> {
+                if (r.isValid()) {
+                  System.out.println("\t\t    " + i + ". Valid");
+                } else {
+                  System.out.println("\t\t    " + i + ". Invalid");
+                  r.getError().forEach(reason -> System.out.println("\t\t        - " + reason));
+                }
+              });
     }
-    return true;
+    return !(sc.fileState() == ComponentState.INVALID
+        || sc.relationState() == ComponentState.INVALID);
   }
 }
 

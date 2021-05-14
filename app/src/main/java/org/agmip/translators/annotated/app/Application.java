@@ -17,6 +17,7 @@ public class Application {
       for (String arg : args) {
         System.err.println("\t" + arg);
       }
+      System.exit(-1);
     }
     Sc2Translator tr = new Sc2Translator();
     tr.setWorkDirectory(workDir);

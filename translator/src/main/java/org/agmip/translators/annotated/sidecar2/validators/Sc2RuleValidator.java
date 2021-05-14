@@ -34,7 +34,8 @@ public class Sc2RuleValidator {
                 validateInt(category, SMC_FIELD),
                 validateValue(value, ruleType),
                 Validation.valid(format),
-                function)
+                function,
+                Validation.valid(ruleType))
             .ap(Sc2Rule::new);
   }
 
@@ -62,7 +63,7 @@ public class Sc2RuleValidator {
   }
 
   private Validation<String, String> validateICASA(String variable) {
-    return (Objects.isNull(variable))
+    return (variable.isBlank())
         ? Validation.invalid("icasa variable not specified.")
         : Validation.valid(variable);
   }
@@ -89,7 +90,7 @@ public class Sc2RuleValidator {
 
   private Validation<String, String> validateValue(String val, RuleType ruleType) {
     if (ruleType != RuleType.VALUE_RULE) return Validation.valid(val);
-    if (Objects.isNull(val)) {
+    if (val.isBlank()) {
       return Validation.invalid(
           SMV_FIELD + " must be present if a " + SMCI_FIELD + " is not specified.");
     } else {

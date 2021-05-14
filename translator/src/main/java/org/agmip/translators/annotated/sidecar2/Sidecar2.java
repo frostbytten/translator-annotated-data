@@ -1,48 +1,38 @@
 package org.agmip.translators.annotated.sidecar2;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
+import org.agmip.translators.annotated.sidecar2.components.ComponentState;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
 
 public class Sidecar2 {
   private final String _self;
-  private final List<Sc2FileReference> _validFiles;
-  private final List<Sc2FileReference> _invalidFiles;
-  private final List<Sc2Relation> _validRelations;
-  private final List<Sc2Relation> _invalidRelations;
+  private final List<Validation<Seq<String>, Sc2FileReference>> _files;
+  private final List<Validation<Seq<String>, Sc2Relation>> _relations;
   private final boolean _valid;
   private final boolean _allFilesValid;
   private final boolean _anyFilesValid;
   private final boolean _allRelationsValid;
   private final boolean _anyRelationsValid;
+  private final ComponentState _fileState;
+  private final ComponentState _relationState;
 
   public Sidecar2(
       String self,
       List<Validation<Seq<String>, Sc2FileReference>> files,
       List<Validation<Seq<String>, Sc2Relation>> relations) {
     _self = self;
-    _validFiles =
-        files.stream()
-            .filter(Validation::isValid)
-            .map(Validation::get)
-            .collect(Collectors.toList());
-    _invalidFiles = null;
-    _validRelations =
-        relations.stream()
-            .filter(Validation::isValid)
-            .map(Validation::get)
-            .collect(Collectors.toList());
-    _invalidRelations = null;
-    _allFilesValid = _validFiles.size() == files.size();
-    _anyFilesValid = (_validFiles.size() > 0);
-    _allRelationsValid = _validRelations.size() == relations.size();
-    _anyRelationsValid = (_validRelations.size() > 0);
-    _valid = _allFilesValid && _allRelationsValid;
+    _files = files;
+    _relations = relations;
+    _fileState = setFilesState();
+    _relationState = setRelationsState();
+    _allFilesValid = files.forAll(Validation::isValid);
+    _anyFilesValid = files.find(Validation::isValid).isDefined();
+    _allRelationsValid = relations.forAll(Validation::isValid);
+    _anyRelationsValid = relations.find(Validation::isValid).isDefined();
+    _valid = _fileState == ComponentState.COMPLETE && _relationState == ComponentState.COMPLETE;
   }
 
   public String self() {
@@ -50,15 +40,19 @@ public class Sidecar2 {
   }
 
   public List<Sc2FileReference> files() {
-    return _validFiles;
+    return _files.filter(Validation::isValid).map(Validation::get);
   }
 
-  public List<Sc2FileReference> allFiles() {
-    return Stream.concat(_validFiles.stream(), _invalidFiles.stream()).collect(Collectors.toList());
+  public List<Sc2Relation> relations() {
+    return _relations.filter(Validation::isValid).map(Validation::get);
   }
 
-  public List<Sc2FileReference> invalidFiles() {
-    return _invalidFiles;
+  public List<Validation<Seq<String>, Sc2FileReference>> rawFiles() {
+    return _files;
+  }
+
+  public List<Validation<Seq<String>, Sc2Relation>> rawRelations() {
+    return _relations;
   }
 
   public boolean isValid() {
@@ -79,5 +73,37 @@ public class Sidecar2 {
 
   public boolean areAllRelationsValid() {
     return _allRelationsValid;
+  }
+
+  public ComponentState fileState() {
+    return _fileState;
+  }
+
+  public ComponentState relationState() {
+    return _relationState;
+  }
+
+  private ComponentState setFilesState() {
+    if (_files.forAll(Validation::isValid)
+        && _files.forAll(f -> f.get().sheetState() == ComponentState.COMPLETE)) {
+      return ComponentState.COMPLETE;
+    } else if (_files.forAll(Validation::isInvalid)
+        || _files
+            .filter(Validation::isValid)
+            .forAll(f -> f.get().sheetState() == ComponentState.INVALID)) {
+      return ComponentState.INVALID;
+    } else {
+      return ComponentState.PARTIAL;
+    }
+  }
+
+  private ComponentState setRelationsState() {
+    if (_relations.forAll((Validation::isValid))) {
+      return ComponentState.COMPLETE;
+    } else if (_relations.forAll(Validation::isInvalid)) {
+      return ComponentState.INVALID;
+    } else {
+      return ComponentState.PARTIAL;
+    }
   }
 }

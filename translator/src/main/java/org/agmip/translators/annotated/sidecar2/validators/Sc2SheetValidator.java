@@ -44,10 +44,12 @@ public class Sc2SheetValidator {
   private Validation<String, Integer> validateOrder(
       Validation<String, Integer> dsr, Validation<String, Integer> der) {
     if (dsr.isInvalid() || der.isInvalid()) return der;
+    if (der.get() == -1) return der;
     int _dsr = dsr.get();
     int _der = der.get();
     return _der < _dsr
-        ? Validation.invalid("data_end_row must(" + _der + " be after data_start_row" + _dsr + ".")
+        ? Validation.invalid(
+            "data_end_row(" + _der + ") must be after data_start_row(" + _dsr + ").")
         : der;
   }
 }

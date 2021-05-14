@@ -46,6 +46,6 @@ public class Sidecar2Parser {
         FilesParser.parse(root.path(ATM_FIELD).path(FILES_FIELD), workDir);
     List<Validation<Seq<String>, Sc2Relation>> _relations =
         RelationsParser.parse(root.path(ATM_FIELD).path(REL_FIELD));
-    return new Sidecar2(self, _files.asJava(), _relations.asJava());
+    return new Sidecar2(self, _files, _relations);
   }
 }

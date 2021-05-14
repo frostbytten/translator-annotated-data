@@ -34,7 +34,7 @@ public enum Utilities {
 
   public static int getMaxSheetColumn(Sc2Sheet sheet) {
     int maxval = 0;
-    Sc2Rule maxRule = sheet.rules().stream().max(colCompare).get();
+    Sc2Rule maxRule = sheet.rules().asJavaMutable().stream().max(colCompare).get();
     return maxRule.getColumnIndex();
   }
 }

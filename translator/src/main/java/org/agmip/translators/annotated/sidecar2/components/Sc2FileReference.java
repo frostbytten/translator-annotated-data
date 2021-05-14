@@ -10,16 +10,18 @@ public class Sc2FileReference {
   private final URI _location;
   private final String _contentType;
   private final List<Validation<Seq<String>, Sc2Sheet>> _sheets;
-  private final List<Sc2Sheet> _validSheets;
-  private final List<Seq<String>> _errors;
+  private final boolean _allSheetsValid;
+  private final boolean _anySheetsValid;
+  private ComponentState _state;
 
   public Sc2FileReference(
       URI location, String contentType, List<Validation<Seq<String>, Sc2Sheet>> sheets) {
     this._location = location;
     this._contentType = contentType;
     this._sheets = sheets;
-    this._validSheets = _sheets.filter(Validation::isValid).map(Validation::get);
-    this._errors = _sheets.filter(Validation::isInvalid).map(Validation::getError);
+    _allSheetsValid = sheets.forAll(Validation::isValid);
+    _anySheetsValid = sheets.find(Validation::isValid).isDefined();
+    _state = setSheetState();
   }
 
   public URI location() {
@@ -40,5 +42,23 @@ public class Sc2FileReference {
 
   public List<Validation<Seq<String>, Sc2Sheet>> rawSheets() {
     return _sheets;
+  }
+
+  public ComponentState setSheetState() {
+    if (_sheets.forAll(Validation::isValid)
+        && _sheets.forAll(s -> s.get().rulesState() == ComponentState.COMPLETE)) {
+      return ComponentState.COMPLETE;
+    } else if (_sheets.forAll(Validation::isInvalid)
+        || _sheets
+            .filter(Validation::isValid)
+            .forAll(s -> s.get().rulesState() == ComponentState.INVALID)) {
+      return ComponentState.INVALID;
+    } else {
+      return ComponentState.PARTIAL;
+    }
+  }
+
+  public ComponentState sheetState() {
+    return _state;
   }
 }
