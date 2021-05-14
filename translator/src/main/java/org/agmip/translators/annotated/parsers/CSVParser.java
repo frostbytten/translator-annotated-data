@@ -1,37 +1,33 @@
 package org.agmip.translators.annotated.parsers;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvValidationException;
+import io.vavr.collection.List;
+import io.vavr.control.Try;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.data.RawDataRow;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
-import org.agmip.translators.annotated.support.FileUtilities;
 
 public class CSVParser {
-  public static List<RawDataRow> parse(Sc2FileReference file, Path workingDir) {
-    List<RawDataRow> rows = new ArrayList<>();
-    if (file.isFileValid()) {
-      Path csvPath;
-      if ((csvPath = FileUtilities.resolveSc2Path(file, workingDir)) != null) {
-        try (Reader bfReader = Files.newBufferedReader(csvPath);
-            CSVReader csvReader = new CSVReader(bfReader)) {
-          String[] line;
-          while ((line = csvReader.readNext()) != null) rows.add(new RawDataRow(line));
-        } catch (IOException | CsvValidationException ex) {
-          file.invalidate("[CSVParser] Error reading file: " + csvPath + "; " + ex);
-        }
-        return rows;
+  public static Validation<String, RawDataRow> parse(Sc2FileReference file) {
+    if (file.location().getScheme().equals("file")) {
+      final Path csvPath = Path.of(file.location());
+      if (csvPath != null) {
+        Try.of(
+                () -> {
+                  try (Reader bfReader = Files.newBufferedReader(csvPath);
+                      CSVReader reader = new CSVReader(bfReader)) {
+                    return List.ofAll(reader).map(RawDataRow::new);
+                  }
+                })
+            .toValidation((ex) -> "Error parsing CSV file: " + csvPath + ex.getMessage());
       } else {
-        file.invalidate("[CSVParser] Unable to open file: " + file.tryName("<missing name>"));
-        return rows;
+        return Validation.invalid("Unable to open file: " + csvPath);
       }
     }
-    return rows;
+    return Validation.invalid("Unsupported URI schema in CSV Parser: " + file.location());
   }
 }

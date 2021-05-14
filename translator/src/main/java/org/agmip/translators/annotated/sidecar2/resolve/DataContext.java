@@ -1,5 +1,6 @@
 package org.agmip.translators.annotated.sidecar2.resolve;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,7 +19,7 @@ public class DataContext {
   public DataContext(Sc2FileReference file, Sc2Sheet sheet) {
     _file = file;
     _sheet = sheet;
-    _filename = file.tryName("_");
+    _filename = Path.of(file.location()).toString();
     _sheetname = sheet.tryName("_");
     _ranges = new HashSet<>();
     _rootScore = 0;
