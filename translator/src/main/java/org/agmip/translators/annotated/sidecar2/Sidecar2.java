@@ -24,7 +24,7 @@ public class Sidecar2 {
   public Sidecar2(
       String self,
       List<Validation<Seq<String>, Sc2FileReference>> files,
-      List<Sc2Relation> relations) {
+      List<Validation<Seq<String>, Sc2Relation>> relations) {
     _self = self;
     _validFiles =
         files.stream()
@@ -32,11 +32,15 @@ public class Sidecar2 {
             .map(Validation::get)
             .collect(Collectors.toList());
     _invalidFiles = null;
-    _validRelations = relations.stream().filter(Sc2Relation::isValid).collect(Collectors.toList());
-    _invalidRelations = relations.stream().filter(r -> !r.isValid()).collect(Collectors.toList());
+    _validRelations =
+        relations.stream()
+            .filter(Validation::isValid)
+            .map(Validation::get)
+            .collect(Collectors.toList());
+    _invalidRelations = null;
     _allFilesValid = _validFiles.size() == files.size();
     _anyFilesValid = (_validFiles.size() > 0);
-    _allRelationsValid = _invalidRelations.isEmpty();
+    _allRelationsValid = _validRelations.size() == relations.size();
     _anyRelationsValid = (_validRelations.size() > 0);
     _valid = _allFilesValid && _allRelationsValid;
   }

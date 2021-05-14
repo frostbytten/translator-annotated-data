@@ -44,8 +44,8 @@ public class Sidecar2Parser {
   private static Sidecar2 _parse(String self, JsonNode root, Path workDir) {
     List<Validation<Seq<String>, Sc2FileReference>> _files =
         FilesParser.parse(root.path(ATM_FIELD).path(FILES_FIELD), workDir);
-    java.util.List<Sc2Relation> _relations =
+    List<Validation<Seq<String>, Sc2Relation>> _relations =
         RelationsParser.parse(root.path(ATM_FIELD).path(REL_FIELD));
-    return new Sidecar2(self, _files.asJava(), _relations);
+    return new Sidecar2(self, _files.asJava(), _relations.asJava());
   }
 }

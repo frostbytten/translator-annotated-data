@@ -26,6 +26,12 @@ public enum Utilities {
         .toValidation(() -> context + " is not a valid number.");
   }
 
+  public static Validation<String, String> checkForBlankString(String val, String context) {
+    return val.isBlank()
+        ? Validation.invalid(context + " is missing or blank.")
+        : Validation.valid(val);
+  }
+
   public static int getMaxSheetColumn(Sc2Sheet sheet) {
     int maxval = 0;
     Sc2Rule maxRule = sheet.rules().stream().max(colCompare).get();
