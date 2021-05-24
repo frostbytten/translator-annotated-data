@@ -2,7 +2,7 @@ package org.agmip.translators.annotated;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.function.Predicate;
 
 import io.vavr.collection.List;
 import io.vavr.control.Try;
@@ -13,23 +13,24 @@ import org.agmip.translators.annotated.sidecar2.components.ComponentState;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 import org.agmip.translators.annotated.sidecar2.parsers.Sidecar2Parser;
+import org.agmip.translators.annotated.data.DataRegistry;
 import org.agmip.translators.interfaces.IInputTranslator;
 import org.agmip.translators.interfaces.WithWorkDir;
 
 public class Sc2Translator implements IInputTranslator, WithWorkDir {
-  private final java.util.List<String> _filenames;
+  private List<String> _filenames;
   private Path _workingDir;
 
   public Sc2Translator() {
-    _filenames = new ArrayList<>();
+    _filenames = List.empty();
   }
 
   @Override
   public void addFile(String file) {
-    _filenames.add(file);
+    _filenames = _filenames.append(file);
   }
 
-  public java.util.List<String> getInputFilenames() {
+  public List<String> getInputFilenames() {
     return _filenames;
   }
 
@@ -40,9 +41,9 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       System.err.println("Working directory not set.");
       return null;
     }
-    List<String> files = List.ofAll(_filenames);
     System.out.println("-- Stage 1: Validating Sidecar2 Files");
-    List<Validation<String, Path>> sidecar2Files = files.map(this::realizePath);
+    System.out.println("Checking " + _filenames.size() + " files.");
+    List<Validation<String, Path>> sidecar2Files = _filenames.map(this::realizePath);
     // TODO Add customized API logging facilities to return errors
     List<String> missingFiles =
         sidecar2Files.filter(Validation::isInvalid).map(Validation::getError);
@@ -68,8 +69,32 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
     List<Sidecar2> sidecars = scv.filter(Validation::isValid).map(Validation::get);
     System.out.println(
         "\t[" + sidecars.size() + "/" + sidecar2Files.size() + "] SC2 files were parsable.");
-    sidecars.forEach(this::checkSC2Validity);
+    List<Sidecar2> validSidecars = sidecars.filter(this::checkSC2Validity);
+    System.out.println("Valid sidecars: " + validSidecars.size());
 
+    System.out.println("-- Stage 2: Preflight files");
+
+    System.out.println("Checking for file availability...");
+    List<Validation<Path, Path>> fileValidation = validSidecars
+      .flatMap(Sidecar2::files)
+      .map(f -> Path.of(f.location()))
+      .distinct()
+      .map(p -> Files.isReadable(p) ?
+        Validation.valid(p) :
+        Validation.invalid(p));
+    System.out.println("Found " + fileValidation.filter(Validation::isValid).size() + "/" + fileValidation.size() + " files.");
+    if (fileValidation.find(Validation::isInvalid).isDefined()) {
+      fileValidation.forEach(f -> {
+          if (f.isValid()) {
+            System.out.println(f.get().getFileName() + " ... FOUND");
+          } else {
+            System.out.println(f.getError().getFileName() + "... MISSING");
+          }
+        });
+    }
+    List<Path> invalidFiles = fileValidation.filter(Validation::isInvalid).map(Validation::getError);
+    List<Sidecar2> translatableSidecars = validSidecars.filter(s -> s.files().forAll(f -> ! invalidFiles.contains(Path.of(f.location()))));
+    System.out.println("Translatable sidecar files: " + translatableSidecars.size());
     return new AceDataset();
   }
 
@@ -93,7 +118,7 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
   }
 
   private boolean checkSC2Validity(Sidecar2 sc) {
-    System.out.println("\t-- Checking " + sc.self());
+    System.out.println("\t-- Checking " + Path.of(sc.self()).getFileName());
     if (sc.isValid()) {
       System.out.println("\t\t -- Fully validated: " + sc.isValid());
       return true;
@@ -176,49 +201,49 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
                 }
               });
     }
-    return !(sc.fileState() == ComponentState.INVALID
-        || sc.relationState() == ComponentState.INVALID);
+    System.out.println(sc.fileState()+ ", " + sc.relationState());
+    return sc.fileState().ordinal() < ComponentState.INVALID.ordinal() && sc.relationState().ordinal() < ComponentState.INVALID.ordinal();
+  }
+
+  private List<Sidecar2> sidecarsWithReachableFiles(List<Sidecar2> sidecars, List<Path> unreachable) {
+    return sidecars.filter(s -> s.files().forAll(f -> unreachable.contains(Path.of(f.location()))));
+  }
+
+  private DataRegistry buildRegistry(List<Sidecar2> sidecars) {
+    DataRegistry reg = new DataRegistry();
+    sidecars.forEach(
+        s -> s.files().forEach(file -> file.sheets().forEach(sheet -> reg.add(file, sheet))));
+    return reg;
   }
 }
-
-  /* Stashing this until later..
-    private DataRegistry buildRegistry() {
-      DataRegistry reg = new DataRegistry();
-      for (Sc2FileReference f : _validFiles) {
-        for (Sc2Sheet s : f.sheets()) {
-          reg.add(f, s);
-        }
-      }
-      return reg;
+/*
+  public List<String> getRealizationOrder() {
+    Graph<DataContext, DefaultEdge> rGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+    boolean addedPrimary;
+    boolean addedForeign;
+    for (Sc2Relation rel : _validRelations) {
+      Sc2Relation.Sc2RelationPart primary = rel.getPrimary();
+      Sc2Relation.Sc2RelationPart foreign = rel.getForeign();
+      String primaryKey = primary.getFile() + "$$" + primary.getSheet();
+      String foreignKey = foreign.getFile() + "$$" + foreign.getSheet();
+      DataContext p = _registry.get(primaryKey);
+      DataContext f = _registry.get(foreignKey);
+      rGraph.addVertex(p);
+      rGraph.addVertex(f);
+      rGraph.addEdge(p, f);
     }
-
-    public List<String> getRealizationOrder() {
-      Graph<DataContext, DefaultEdge> rGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
-      boolean addedPrimary;
-      boolean addedForeign;
-      for (Sc2Relation rel : _validRelations) {
-        Sc2Relation.Sc2RelationPart primary = rel.getPrimary();
-        Sc2Relation.Sc2RelationPart foreign = rel.getForeign();
-        String primaryKey = primary.getFile() + "$$" + primary.getSheet();
-        String foreignKey = foreign.getFile() + "$$" + foreign.getSheet();
-        DataContext p = _registry.get(primaryKey);
-        DataContext f = _registry.get(foreignKey);
-        rGraph.addVertex(p);
-        rGraph.addVertex(f);
-        rGraph.addEdge(p, f);
-      }
-      List<String> relOrder = new ArrayList<>();
-      Iterator<DataContext> iter = new TopologicalOrderIterator<>(rGraph);
-      iter.forEachRemaining(
-        v ->
-          relOrder.add(
-            v.toString(false) + " - " + rGraph.degreeOf(v) + "[" + v.maxBound() + "]"));
-      Collections.reverse(relOrder);
-      return relOrder;
-    }
-
-    public Map<String, List<RawDataRow>> parseFiles() {
-      return null;
-    }
+    List<String> relOrder = new ArrayList<>();
+    Iterator<DataContext> iter = new TopologicalOrderIterator<>(rGraph);
+    iter.forEachRemaining(
+      v ->
+        relOrder.add(
+          v.toString(false) + " - " + rGraph.degreeOf(v) + "[" + v.maxBound() + "]"));
+    Collections.reverse(relOrder);
+    return relOrder;
   }
-  */
+
+  public Map<String, List<RawDataRow>> parseFiles() {
+    return null;
+  }
+}
+*/
