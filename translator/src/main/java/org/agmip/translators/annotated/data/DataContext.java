@@ -1,9 +1,9 @@
-package org.agmip.translators.annotated.sidecar2.resolve;
+package org.agmip.translators.annotated.data;
 
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
 
+import io.vavr.collection.HashSet;
+import io.vavr.collection.Set;
 import org.agmip.translators.annotated.sidecar2.Utilities;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
@@ -13,7 +13,7 @@ public class DataContext {
   private final String _sheetname;
   private final Sc2FileReference _file;
   private final Sc2Sheet _sheet;
-  private final Set<DataRange> _ranges;
+  private Set<DataRange> _ranges;
   private int _rootScore;
 
   public DataContext(Sc2FileReference file, Sc2Sheet sheet) {
@@ -21,7 +21,7 @@ public class DataContext {
     _sheet = sheet;
     _filename = Path.of(file.location()).toString();
     _sheetname = sheet.tryName("_");
-    _ranges = new HashSet<>();
+    _ranges = HashSet.empty();
     _rootScore = 0;
   }
 
@@ -41,8 +41,9 @@ public class DataContext {
     return _sheet;
   }
 
-  public boolean addRange(DataRange range) {
-    return _ranges.add(range);
+  public DataContext addRange(DataRange range) {
+    _ranges = _ranges.add(range);
+    return this;
   }
 
   public Set<DataRange> ranges() {

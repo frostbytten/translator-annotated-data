@@ -1,4 +1,4 @@
-package org.agmip.translators.annotated.sidecar2.resolve;
+package org.agmip.translators.annotated.data;
 
 import java.util.ArrayList;
 import java.util.List;
