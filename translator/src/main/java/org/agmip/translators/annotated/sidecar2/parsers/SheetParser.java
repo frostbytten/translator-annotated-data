@@ -1,20 +1,21 @@
 package org.agmip.translators.annotated.sidecar2.parsers;
 
+import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Rule;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
-
-import java.util.List;
-
-import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.*;
-import static org.agmip.translators.annotated.sidecar2.Utilities.convertStringToInteger;
+import org.agmip.translators.annotated.sidecar2.validators.Sc2SheetValidator;
 
 public class SheetParser {
-    public static Sc2Sheet parse(JsonNode sheetJson, String context) {
-       String name = sheetJson.path(SN_FIELD).asText(null);
-       Integer dataStartRow = convertStringToInteger(sheetJson.path(SDSR_FIELD).asText(null));
-       Integer dataEndRow = convertStringToInteger(sheetJson.path(SDER_FIELD).asText(null));
-       List<Sc2Rule> rules = RulesParser.parse(sheetJson.path(SM_FIELD));
-       return new Sc2Sheet(name, dataStartRow, dataEndRow, rules, context);
-    }
+  public static Validation<Seq<String>, Sc2Sheet> parse(JsonNode sheetJson, String context) {
+    String name = sheetJson.path(SN_FIELD).asText(null);
+    String dataStartRow = sheetJson.path(SDSR_FIELD).asText(null);
+    String dataEndRow = sheetJson.path(SDER_FIELD).asText(null);
+    List<Validation<Seq<String>, Sc2Rule>> rules = RulesParser.parse(sheetJson.path(SM_FIELD));
+    return new Sc2SheetValidator().validate(name, dataStartRow, dataEndRow, rules, context);
+  }
 }

@@ -1,111 +1,109 @@
 package org.agmip.translators.annotated.sidecar2;
 
-import org.agmip.translators.annotated.sidecar2.components.Sc2File;
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
+import org.agmip.translators.annotated.sidecar2.components.ComponentState;
+import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Relation.Sc2RelationPart;
-import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
-import org.agmip.translators.annotated.sidecar2.resolve.DataContext;
-import org.agmip.translators.annotated.sidecar2.resolve.DataRegistry;
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.traverse.TopologicalOrderIterator;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.function.BinaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Sidecar2 {
-	private final List<Sc2File> _validFiles;
-	private final List<Sc2File> _invalidFiles;
-	private final List<Sc2Relation> _validRelations;
-	private final List<Sc2Relation> _invalidRelations;
-	private final boolean _valid;
-	private final boolean _allFilesValid;
-	private final boolean _anyFilesValid;
-	private final boolean _allRelationsValid;
-	private final boolean _anyRelationsValid;
-	private final DataRegistry _registry;
+  private final String _self;
+  private final List<Validation<Seq<String>, Sc2FileReference>> _files;
+  private final List<Validation<Seq<String>, Sc2Relation>> _relations;
+  private final boolean _valid;
+  private final boolean _allFilesValid;
+  private final boolean _anyFilesValid;
+  private final boolean _allRelationsValid;
+  private final boolean _anyRelationsValid;
+  private final ComponentState _fileState;
+  private final ComponentState _relationState;
 
-	public Sidecar2(List<Sc2File> files, List<Sc2Relation> relations) {
-		_validFiles = files.stream().filter(f -> f.isValid()).collect(Collectors.toList());
-		_invalidFiles = files.stream().filter(f -> !f.isValid()).collect(Collectors.toList());
-		_validRelations = relations.stream().filter(r -> r.isValid()).collect(Collectors.toList());
-		_invalidRelations = relations.stream().filter(r -> !r.isValid()).collect(Collectors.toList());
-		_allFilesValid = _invalidFiles.isEmpty();
-		_anyFilesValid = (_validFiles.size() > 0);
-		_allRelationsValid = _invalidRelations.isEmpty();
-		_anyRelationsValid = (_validRelations.size() > 0);
-		_registry = buildRegistry();
-		_valid = _allFilesValid && _allRelationsValid;
-	}
+  public Sidecar2(
+      String self,
+      List<Validation<Seq<String>, Sc2FileReference>> files,
+      List<Validation<Seq<String>, Sc2Relation>> relations) {
+    _self = self;
+    _files = files;
+    _relations = relations;
+    _fileState = setFilesState();
+    _relationState = setRelationsState();
+    _allFilesValid = files.forAll(Validation::isValid);
+    _anyFilesValid = files.find(Validation::isValid).isDefined();
+    _allRelationsValid = relations.forAll(Validation::isValid);
+    _anyRelationsValid = relations.find(Validation::isValid).isDefined();
+    _valid = _fileState == ComponentState.COMPLETE && _relationState == ComponentState.COMPLETE;
+  }
 
-	public List<Sc2File> files() {
-		return _validFiles;
-	}
+  public String self() {
+    return _self;
+  }
 
-	public List<Sc2File> allFiles() {
-		return Stream.concat(_validFiles.stream(), _invalidFiles.stream()).collect(Collectors.toList());
-	}
+  public List<Sc2FileReference> files() {
+    return _files.filter(Validation::isValid).map(Validation::get);
+  }
 
-	public List<Sc2File> invalidFiles() {
-		return _invalidFiles;
-	}
+  public List<Sc2Relation> relations() {
+    return _relations.filter(Validation::isValid).map(Validation::get);
+  }
 
-	public boolean isValid() {
-		return _valid;
-	}
+  public List<Validation<Seq<String>, Sc2FileReference>> rawFiles() {
+    return _files;
+  }
 
-	public boolean areAnyFilesValid() {
-		return _anyFilesValid;
-	}
+  public List<Validation<Seq<String>, Sc2Relation>> rawRelations() {
+    return _relations;
+  }
 
-	public boolean areAllFilesValid() {
-		return _allFilesValid;
-	}
+  public boolean isValid() {
+    return _valid;
+  }
 
-	public boolean areAnyRelationsValid() {
-		return _anyRelationsValid;
-	}
+  public boolean areAnyFilesValid() {
+    return _anyFilesValid;
+  }
 
-	public boolean areAllRelationsValid() {
-		return _allRelationsValid;
-	}
+  public boolean areAllFilesValid() {
+    return _allFilesValid;
+  }
 
-	private DataRegistry buildRegistry() {
-		DataRegistry reg = new DataRegistry();
-		for(Sc2File f : _validFiles) {
-			for(Sc2Sheet s: f.sheets()) {
-				reg.add(f, s);
-			}
-		}
-		return reg;
-	}
+  public boolean areAnyRelationsValid() {
+    return _anyRelationsValid;
+  }
 
-	public List<String> getRealizationOrder() {
-		Graph<DataContext, DefaultEdge> rGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
-		boolean addedPrimary;
-		boolean addedForeign;
-		for(Sc2Relation rel: _validRelations) {
-			Sc2RelationPart primary = rel.getPrimary();
-			Sc2RelationPart foreign = rel.getForeign();
-			String primaryKey = primary.getFile() + "$$" + primary.getSheet();
-			String foreignKey = foreign.getFile() + "$$" + foreign.getSheet();
-			DataContext p = _registry.get(primaryKey);
-			DataContext f = _registry.get(foreignKey);
-			rGraph.addVertex(p);
-			rGraph.addVertex(f);
-			rGraph.addEdge(p, f);
-		}
-		List<String> relOrder = new ArrayList<>();
-		Iterator<DataContext> iter = new TopologicalOrderIterator<>(rGraph);
-		iter.forEachRemaining(v -> relOrder.add(v.toString(false) + " - " + rGraph.degreeOf(v)));
-		Collections.reverse(relOrder);
-		return relOrder;
-	}
+  public boolean areAllRelationsValid() {
+    return _allRelationsValid;
+  }
+
+  public ComponentState fileState() {
+    return _fileState;
+  }
+
+  public ComponentState relationState() {
+    return _relationState;
+  }
+
+  private ComponentState setFilesState() {
+    if (_files.forAll(Validation::isValid)
+        && _files.forAll(f -> f.get().sheetState() == ComponentState.COMPLETE)) {
+      return ComponentState.COMPLETE;
+    } else if (_files.forAll(Validation::isInvalid)
+        || _files
+            .filter(Validation::isValid)
+            .forAll(f -> f.get().sheetState() == ComponentState.INVALID)) {
+      return ComponentState.INVALID;
+    } else {
+      return ComponentState.PARTIAL;
+    }
+  }
+
+  private ComponentState setRelationsState() {
+    if (_relations.forAll((Validation::isValid))) {
+      return ComponentState.COMPLETE;
+    } else if (_relations.forAll(Validation::isInvalid)) {
+      return ComponentState.INVALID;
+    } else {
+      return ComponentState.PARTIAL;
+    }
+  }
 }

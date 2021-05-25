@@ -1,4 +1,4 @@
-package test.components
+package test.sidecar2.components
 
 
 import spock.lang.Specification
