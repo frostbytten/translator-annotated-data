@@ -2,18 +2,23 @@ package org.agmip.translators.annotated;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Predicate;
+import java.util.Objects;
 
+import io.vavr.collection.HashMap;
 import io.vavr.collection.List;
+import io.vavr.collection.Map;
+import io.vavr.collection.Seq;
+import io.vavr.collection.Set;
 import io.vavr.control.Try;
 import io.vavr.control.Validation;
 import org.agmip.ace.AceDataset;
+import org.agmip.translators.annotated.data.DataFileKey;
+import org.agmip.translators.annotated.parsers.TikaParser;
 import org.agmip.translators.annotated.sidecar2.Sidecar2;
 import org.agmip.translators.annotated.sidecar2.components.ComponentState;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 import org.agmip.translators.annotated.sidecar2.parsers.Sidecar2Parser;
-import org.agmip.translators.annotated.data.DataRegistry;
 import org.agmip.translators.interfaces.IInputTranslator;
 import org.agmip.translators.interfaces.WithWorkDir;
 
@@ -75,26 +80,66 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
     System.out.println("-- Stage 2: Preflight files");
 
     System.out.println("Checking for file availability...");
-    List<Validation<Path, Path>> fileValidation = validSidecars
-      .flatMap(Sidecar2::files)
-      .map(f -> Path.of(f.location()))
-      .distinct()
-      .map(p -> Files.isReadable(p) ?
-        Validation.valid(p) :
-        Validation.invalid(p));
-    System.out.println("Found " + fileValidation.filter(Validation::isValid).size() + "/" + fileValidation.size() + " files.");
+    List<Validation<Path, Path>> fileValidation =
+        validSidecars
+            .flatMap(Sidecar2::files)
+            .map(f -> Path.of(f.location()))
+            .distinct()
+            .map(p -> Files.isReadable(p) ? Validation.valid(p) : Validation.invalid(p));
+    System.out.println(
+        "Found "
+            + fileValidation.filter(Validation::isValid).size()
+            + "/"
+            + fileValidation.size()
+            + " files.");
     if (fileValidation.find(Validation::isInvalid).isDefined()) {
-      fileValidation.forEach(f -> {
-          if (f.isValid()) {
-            System.out.println(f.get().getFileName() + " ... FOUND");
-          } else {
-            System.out.println(f.getError().getFileName() + "... MISSING");
-          }
-        });
+      fileValidation.forEach(
+          f -> {
+            if (f.isValid()) {
+              System.out.println(f.get().getFileName() + " ... FOUND");
+            } else {
+              System.out.println(f.getError().getFileName() + "... MISSING");
+            }
+          });
     }
-    List<Path> invalidFiles = fileValidation.filter(Validation::isInvalid).map(Validation::getError);
-    List<Sidecar2> translatableSidecars = validSidecars.filter(s -> s.files().forAll(f -> ! invalidFiles.contains(Path.of(f.location()))));
+    List<Path> invalidFiles =
+        fileValidation.filter(Validation::isInvalid).map(Validation::getError);
+    List<Sidecar2> translatableSidecars =
+        validSidecars.filter(
+            s -> s.files().forAll(f -> !invalidFiles.contains(Path.of(f.location()))));
     System.out.println("Translatable sidecar files: " + translatableSidecars.size());
+
+    // Now we should create structures with File/Sheet and File-Sheet/Columns
+    Map<DataFileKey, Set<String>> fileRegistry =
+        translatableSidecars
+            .flatMap(Sidecar2::files)
+            .map(DataFileKey::createKey)
+            .filter(Objects::nonNull)
+            .toMap(key -> key, f -> f.getFileReference().sheets().map(s -> s.tryName("_")).toSet());
+
+    // Debugging
+    fileRegistry.forEach(
+        s -> {
+          System.out.println(s._1);
+          s._2.forEach(s2 -> System.out.println("\t" + s2));
+        });
+
+    List<Validation<String, Map<String, Seq<Seq<String>>>>> fullData =
+        fileRegistry.foldLeft(
+            List.empty(), (list, entry) -> list.append(TikaParser.parse(entry._1, entry._2)));
+
+    if (fullData.find(Validation::isInvalid).isDefined()) {
+      System.out.println("Errors parsing!");
+    }
+
+    Map<String, Seq<Seq<String>>> dataRegistry = HashMap.empty();
+    for (Map<String, Seq<Seq<String>>> m :
+        fullData.filter(Validation::isValid).map(Validation::get)) {
+      for (String key : m.keySet()) {
+        dataRegistry = dataRegistry.put(key, m.get(key).get());
+      }
+    }
+
     return new AceDataset();
   }
 
@@ -201,19 +246,14 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
                 }
               });
     }
-    System.out.println(sc.fileState()+ ", " + sc.relationState());
-    return sc.fileState().ordinal() < ComponentState.INVALID.ordinal() && sc.relationState().ordinal() < ComponentState.INVALID.ordinal();
+    System.out.println(sc.fileState() + ", " + sc.relationState());
+    return sc.fileState().ordinal() < ComponentState.INVALID.ordinal()
+        && sc.relationState().ordinal() < ComponentState.INVALID.ordinal();
   }
 
-  private List<Sidecar2> sidecarsWithReachableFiles(List<Sidecar2> sidecars, List<Path> unreachable) {
+  private List<Sidecar2> sidecarsWithReachableFiles(
+      List<Sidecar2> sidecars, List<Path> unreachable) {
     return sidecars.filter(s -> s.files().forAll(f -> unreachable.contains(Path.of(f.location()))));
-  }
-
-  private DataRegistry buildRegistry(List<Sidecar2> sidecars) {
-    DataRegistry reg = new DataRegistry();
-    sidecars.forEach(
-        s -> s.files().forEach(file -> file.sheets().forEach(sheet -> reg.add(file, sheet))));
-    return reg;
   }
 }
 /*
