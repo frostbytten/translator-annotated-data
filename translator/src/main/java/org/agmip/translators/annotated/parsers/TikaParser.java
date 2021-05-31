@@ -18,7 +18,7 @@ public class TikaParser {
               AutoDetectParser autoParser = new AutoDetectParser();
               Metadata md = new Metadata();
               TikaInputStream in = TikaInputStream.get(fileKey.getPath());
-              RawDataHandler handler = new RawDataHandler(fileKey);
+              RawDataHandler handler = new RawDataHandler(fileKey, sheets);
               autoParser.parse(in, handler, md);
               return handler.getResults();
             })
