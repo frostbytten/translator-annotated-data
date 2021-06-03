@@ -4,6 +4,7 @@ import java.net.URI;
 
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
+import io.vavr.control.Option;
 import io.vavr.control.Validation;
 
 public class Sc2FileReference {
@@ -34,6 +35,10 @@ public class Sc2FileReference {
 
   public List<Sc2Sheet> sheets() {
     return _sheets.filter(Validation::isValid).map(Validation::get);
+  }
+
+  public Option<Sc2Sheet> sheet(String name, int tableId) {
+    return this.sheets().find(s -> s.tryName("_").equals(name) && s.getSheetIndex() == tableId);
   }
 
   public List<Seq<String>> errors() {

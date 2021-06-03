@@ -13,9 +13,11 @@ import org.agmip.translators.annotated.sidecar2.validators.Sc2SheetValidator;
 public class SheetParser {
   public static Validation<Seq<String>, Sc2Sheet> parse(JsonNode sheetJson, String context) {
     String name = sheetJson.path(SN_FIELD).asText(null);
+    String sheetIndex = sheetJson.path(SI_FIELD).asText(null);
     String dataStartRow = sheetJson.path(SDSR_FIELD).asText(null);
     String dataEndRow = sheetJson.path(SDER_FIELD).asText(null);
     List<Validation<Seq<String>, Sc2Rule>> rules = RulesParser.parse(sheetJson.path(SM_FIELD));
-    return new Sc2SheetValidator().validate(name, dataStartRow, dataEndRow, rules, context);
+    return new Sc2SheetValidator()
+        .validate(name, sheetIndex, dataStartRow, dataEndRow, rules, context);
   }
 }

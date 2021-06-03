@@ -3,6 +3,7 @@ package org.agmip.translators.annotated.sidecar2.validators;
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.MIME_XLSX;
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.SDER_FIELD;
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.SDSR_FIELD;
+import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.SI_FIELD;
 import static org.agmip.translators.annotated.sidecar2.Utilities.tryStringToInteger;
 
 import java.util.Objects;
@@ -16,16 +17,19 @@ import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 public class Sc2SheetValidator {
   public Validation<Seq<String>, Sc2Sheet> validate(
       String name,
+      String sheetIndex,
       String dataStartRow,
       String dataEndRow,
       List<Validation<Seq<String>, Sc2Rule>> rules,
       String fileType) {
+    Validation<String, Integer> si =
+        validateLowerBounds(tryStringToInteger(sheetIndex, SI_FIELD, 1), SI_FIELD, 1);
     Validation<String, Integer> dsr =
         validateLowerBounds(tryStringToInteger(dataStartRow, SDSR_FIELD), SDSR_FIELD);
     Validation<String, Integer> der =
         validateLowerBounds(tryStringToInteger(dataEndRow, SDER_FIELD), SDER_FIELD);
     return Validation.combine(
-            validateName(name, fileType), dsr, validateOrder(dsr, der), Validation.valid(rules))
+            validateName(name, fileType), si, dsr, validateOrder(dsr, der), Validation.valid(rules))
         .ap(Sc2Sheet::new);
   }
 
@@ -36,9 +40,22 @@ public class Sc2SheetValidator {
   }
 
   private Validation<String, Integer> validateLowerBounds(
-      Validation<String, Integer> dr, String context) {
+      Validation<String, Integer> num, String context) {
+    return validateLowerBounds(num, context, -1);
+  }
+
+  private Validation<String, Integer> validateLowerBounds(
+      Validation<String, Integer> dr, String context, int lowerBound) {
     if (dr.isInvalid()) return dr;
-    return dr.get() < -1 ? Validation.invalid(context + "(" + dr.get() + ") is less than 0.") : dr;
+    return dr.get() < lowerBound
+        ? Validation.invalid(
+            context
+                + "("
+                + dr.get()
+                + ") is less than "
+                + (lowerBound == -1 ? 0 : lowerBound)
+                + ".")
+        : dr;
   }
 
   private Validation<String, Integer> validateOrder(

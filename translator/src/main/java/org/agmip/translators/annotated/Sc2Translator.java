@@ -12,6 +12,7 @@ import io.vavr.collection.Set;
 import io.vavr.control.Try;
 import io.vavr.control.Validation;
 import org.agmip.ace.AceDataset;
+import org.agmip.translators.annotated.data.DataContextKey;
 import org.agmip.translators.annotated.data.DataFileKey;
 import org.agmip.translators.annotated.parsers.TikaParser;
 import org.agmip.translators.annotated.sidecar2.Sidecar2;
@@ -124,7 +125,7 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
           s._2.forEach(s2 -> System.out.println("\t" + s2));
         });
 
-    List<Validation<String, Map<String, Seq<Seq<String>>>>> fullData =
+    List<Validation<String, Map<DataContextKey, Seq<Seq<String>>>>> fullData =
         fileRegistry.foldLeft(
             List.empty(), (list, entry) -> list.append(TikaParser.parse(entry._1, entry._2)));
 
@@ -132,13 +133,32 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       System.out.println("Errors parsing!");
     }
 
-    Map<String, Seq<Seq<String>>> dataRegistry = HashMap.empty();
-    for (Map<String, Seq<Seq<String>>> m :
+    Map<DataContextKey, Seq<Seq<String>>> dataRegistry = HashMap.empty();
+    for (Map<DataContextKey, Seq<Seq<String>>> m :
         fullData.filter(Validation::isValid).map(Validation::get)) {
-      for (String key : m.keySet()) {
-        dataRegistry = dataRegistry.put(key, m.get(key).get());
+      for (DataContextKey key : m.keySet()) {
+        for (Sc2Sheet sheet :
+            key.getFileRef().sheets().filter(s -> s.tryName("_").equals(key.getSheetName()))) {
+          int si = sheet.getSheetIndex();
+          DataContextKey newKey = key.changeTableId(si);
+          Seq<Seq<String>> allValues = m.get(key).get();
+          System.out.println(
+              newKey + " [" + sheet.getDataStartRow() + ", " + sheet.getDataEndRow() + "]");
+          Seq<Seq<String>> filteredValues =
+              allValues.slice(
+                  sheet.getDataStartRow() - 1,
+                  (sheet.getDataEndRow() == -1 ? allValues.length() : sheet.getDataEndRow()));
+          dataRegistry = dataRegistry.put(newKey, filteredValues);
+        }
       }
     }
+
+    // Sample data test
+    DataContextKey testKey = dataRegistry.keySet().toList().get(1);
+    Seq<Seq<String>> testValues = dataRegistry.get(testKey).get();
+    System.out.println("Looking at: " + testKey);
+    testValues.forEach(row -> System.out.println(row.mkString(", ")));
+    System.out.println("Extracted " + testValues.size() + " rows from " + testKey);
 
     return new AceDataset();
   }

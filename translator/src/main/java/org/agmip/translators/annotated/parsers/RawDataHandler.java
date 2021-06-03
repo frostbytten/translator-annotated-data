@@ -6,6 +6,7 @@ import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
+import org.agmip.translators.annotated.data.DataContextKey;
 import org.agmip.translators.annotated.data.DataFileKey;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -24,11 +25,12 @@ public class RawDataHandler implements ContentHandler {
   private String currentSheet = "_";
   private Seq<String> currentRow = List.empty();
   private Seq<Seq<String>> sheetRows = List.empty();
-  private Map<String, Seq<Seq<String>>> results;
+  private Map<DataContextKey, Seq<Seq<String>>> results;
   private boolean parseThisSheet = false;
   private boolean hasSheetName = false;
 
-  public RawDataHandler(DataFileKey dfk, Set<String> sheets, Map<String, Seq<Seq<String>>> parsed) {
+  public RawDataHandler(
+      DataFileKey dfk, Set<String> sheets, Map<DataContextKey, Seq<Seq<String>>> parsed) {
     super();
     this.dfk = dfk;
     this.targetSheets = sheets;
@@ -51,7 +53,7 @@ public class RawDataHandler implements ContentHandler {
         parseThisSheet = false;
         context = RDHContext.SHEET;
         if (!sheetRows.isEmpty()) {
-          results = results.put(dfk.getKey() + "$$" + currentSheet, sheetRows);
+          results = results.put(new DataContextKey(dfk, currentSheet), sheetRows);
           sheetRows = List.empty();
         }
         break;
@@ -105,7 +107,7 @@ public class RawDataHandler implements ContentHandler {
   @Override
   public void endDocument() {
     if (!sheetRows.isEmpty()) {
-      results = results.put(dfk.getKey() + "$$" + currentSheet, sheetRows);
+      results = results.put(new DataContextKey(dfk, currentSheet), sheetRows);
     }
   }
 
@@ -124,7 +126,7 @@ public class RawDataHandler implements ContentHandler {
   @Override
   public void skippedEntity(String name) {}
 
-  public Map<String, Seq<Seq<String>>> getResults() {
+  public Map<DataContextKey, Seq<Seq<String>>> getResults() {
     return results;
   }
 }
