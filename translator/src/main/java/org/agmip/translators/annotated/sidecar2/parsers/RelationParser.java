@@ -27,6 +27,7 @@ public class RelationParser {
   public static Validation<Seq<String>, Sc2RelationKey> _parse(JsonNode json) {
     String file = json.path(REL_F_FIELD).asText();
     String sheet = json.path(REL_S_FIELD).asText();
-    return new Sc2RelationKeyValidator().validate(file, sheet, json.path(REL_K_FIELD));
+    String table = json.path(TABLE_FIELD).asText(null);
+    return new Sc2RelationKeyValidator().validate(file, sheet, table, json.path(REL_K_FIELD));
   }
 }

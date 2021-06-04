@@ -2,7 +2,9 @@ package org.agmip.translators.annotated.sidecar2.validators;
 
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.COL_FIELD;
 import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.REL_F_FIELD;
+import static org.agmip.translators.annotated.sidecar2.Sidecar2Keys.TABLE_FIELD;
 import static org.agmip.translators.annotated.sidecar2.Utilities.checkForBlankString;
+import static org.agmip.translators.annotated.sidecar2.Utilities.tryStringToInteger;
 
 import java.util.HashSet;
 
@@ -14,13 +16,15 @@ import org.agmip.translators.annotated.sidecar2.components.Sc2RelationKey;
 
 public class Sc2RelationKeyValidator {
   public Validation<Seq<String>, Sc2RelationKey> validate(
-      String file, String sheet, JsonNode keys) {
+      String file, String sheet, String table, JsonNode keys) {
+    Validation<String, Integer> tableIndex = tryStringToInteger(table, TABLE_FIELD, 1);
     Validation<String, List<Integer>> cleanKeys = validateKeys(keys);
     return Validation.combine(
             checkForBlankString(file, REL_F_FIELD),
             // checkForBlankString(sheet, REL_S_FIELD),
             Validation.valid(
                 sheet), // We cannot really test the validity of sheets until after the true
+            tableIndex,
             // filetype has been determined.
             validateUniqueKeys(cleanKeys))
         .ap(Sc2RelationKey::new);
