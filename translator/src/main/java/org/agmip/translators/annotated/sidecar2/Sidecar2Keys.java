@@ -11,13 +11,13 @@ public class Sidecar2Keys {
   // AgMIP Translation Mapping Strings
   public static final String ATM_FIELD = "agmip_translation_mappings";
   public static final String COL_FIELD = "column_index";
+  public static final String TABLE_FIELD = "table_index";
   // -- Relations
   public static final String REL_FIELD = "relations";
   public static final String RELF_FIELD = "from";
   public static final String RELT_FIELD = "to";
   public static final String REL_F_FIELD = "file";
   public static final String REL_S_FIELD = "sheet";
-  public static final String REL_TI_FIELD = "table_index";
   public static final String REL_K_FIELD = "keys";
   public static final String REL_KIF_FIELD = "ignored_flag";
   // -- Files
@@ -31,6 +31,7 @@ public class Sidecar2Keys {
   // ---- Sheets
   public static final String S_FIELD = "sheets";
   public static final String SN_FIELD = "sheet_name";
+  public static final String SI_FIELD = "sheet_index";
   public static final String SHR_FIELD = "header_row";
   public static final String SDSR_FIELD = "data_start_row";
   public static final String SDER_FIELD = "data_end_row";
