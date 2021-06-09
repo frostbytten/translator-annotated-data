@@ -6,8 +6,12 @@ import java.util.Objects;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Try;
 import io.vavr.control.Validation;
+import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Rule;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
 
 public enum Utilities {
   INSTANCE;
@@ -36,5 +40,16 @@ public enum Utilities {
     int maxval = 0;
     Sc2Rule maxRule = sheet.rules().asJavaMutable().stream().max(colCompare).get();
     return maxRule.getColumnIndex();
+  }
+
+  public static Validation<String, String> detectFileType(Sc2FileReference file) {
+    return Try.of(
+            () -> {
+              TikaConfig tc = new TikaConfig();
+              return tc.getDetector()
+                  .detect(TikaInputStream.get(file.location()), new Metadata())
+                  .toString();
+            })
+        .toValidation(() -> "Unable to detect filetype.");
   }
 }

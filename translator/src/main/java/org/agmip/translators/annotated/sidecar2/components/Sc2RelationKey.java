@@ -5,11 +5,13 @@ import io.vavr.collection.List;
 public class Sc2RelationKey {
   private final String _file;
   private final String _sheet;
+  private final int _table;
   private final List<Integer> _keys;
 
-  public Sc2RelationKey(String file, String sheet, List<Integer> keys) {
+  public Sc2RelationKey(String file, String sheet, Integer table, List<Integer> keys) {
     this._file = file;
     this._sheet = sheet;
+    this._table = table == null ? 1 : table;
     this._keys = keys;
   }
 
@@ -19,6 +21,10 @@ public class Sc2RelationKey {
 
   public String getSheet() {
     return _sheet;
+  }
+
+  public int getTableIndex() {
+    return _table;
   }
 
   public List<Integer> getKeys() {

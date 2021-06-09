@@ -14,14 +14,20 @@ public class Sc2Sheet {
   private final String _name;
   private final int _dsr;
   private final int _der;
+  private final int _sheetIndex;
   private final List<Validation<Seq<String>, Sc2Rule>> _rules;
   public ComponentState _state;
 
   public Sc2Sheet(
-      String name, Integer dsr, Integer der, List<Validation<Seq<String>, Sc2Rule>> rules) {
+      String name,
+      Integer si,
+      Integer dsr,
+      Integer der,
+      List<Validation<Seq<String>, Sc2Rule>> rules) {
     this._name = name;
     this._dsr = dsr == null ? 0 : dsr;
     this._der = der == null ? -1 : der;
+    this._sheetIndex = si;
     this._rules = rules;
     _state = setState();
   }
@@ -32,6 +38,10 @@ public class Sc2Sheet {
 
   public String tryName(String orElse) {
     return _name == null ? orElse : _name;
+  }
+
+  public int getSheetIndex() {
+    return _sheetIndex;
   }
 
   public int getDataStartRow() {

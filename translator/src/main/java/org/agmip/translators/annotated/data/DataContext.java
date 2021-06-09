@@ -19,7 +19,7 @@ public class DataContext {
   public DataContext(Sc2FileReference file, Sc2Sheet sheet) {
     _file = file;
     _sheet = sheet;
-    _filename = Path.of(file.location()).toString();
+    _filename = Path.of(file.location()).getFileName().toString();
     _sheetname = sheet.tryName("_");
     _ranges = HashSet.empty();
     _rootScore = 0;
