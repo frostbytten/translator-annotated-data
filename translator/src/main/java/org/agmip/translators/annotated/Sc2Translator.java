@@ -2,9 +2,11 @@ package org.agmip.translators.annotated;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Objects;
 
 import io.vavr.collection.HashMap;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
@@ -12,16 +14,24 @@ import io.vavr.collection.Set;
 import io.vavr.control.Try;
 import io.vavr.control.Validation;
 import org.agmip.ace.AceDataset;
+import org.agmip.translators.annotated.data.DataContext;
 import org.agmip.translators.annotated.data.DataContextKey;
 import org.agmip.translators.annotated.data.DataFileKey;
 import org.agmip.translators.annotated.parsers.TikaParser;
 import org.agmip.translators.annotated.sidecar2.Sidecar2;
 import org.agmip.translators.annotated.sidecar2.components.ComponentState;
 import org.agmip.translators.annotated.sidecar2.components.Sc2FileReference;
+import org.agmip.translators.annotated.sidecar2.components.Sc2Relation;
+import org.agmip.translators.annotated.sidecar2.components.Sc2RelationKey;
+import org.agmip.translators.annotated.sidecar2.components.Sc2Rule;
 import org.agmip.translators.annotated.sidecar2.components.Sc2Sheet;
 import org.agmip.translators.annotated.sidecar2.parsers.Sidecar2Parser;
 import org.agmip.translators.interfaces.IInputTranslator;
 import org.agmip.translators.interfaces.WithWorkDir;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 public class Sc2Translator implements IInputTranslator, WithWorkDir {
   private List<String> _filenames;
@@ -134,6 +144,8 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
     }
 
     Map<DataContextKey, Seq<Seq<String>>> dataRegistry = HashMap.empty();
+    Map<DataContextKey, Seq<Sc2Rule>> rulesRegistry = HashMap.empty();
+
     for (Map<DataContextKey, Seq<Seq<String>>> m :
         fullData.filter(Validation::isValid).map(Validation::get)) {
       for (DataContextKey key : m.keySet()) {
@@ -149,17 +161,69 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
                   sheet.getDataStartRow() - 1,
                   (sheet.getDataEndRow() == -1 ? allValues.length() : sheet.getDataEndRow()));
           dataRegistry = dataRegistry.put(newKey, filteredValues);
+          rulesRegistry = rulesRegistry.put(newKey, sheet.rules());
         }
       }
     }
 
     // Sample data test
+    /*
     DataContextKey testKey = dataRegistry.keySet().toList().get(1);
     Seq<Seq<String>> testValues = dataRegistry.get(testKey).get();
     System.out.println("Looking at: " + testKey);
     testValues.forEach(row -> System.out.println(row.mkString(", ")));
     System.out.println("Extracted " + testValues.size() + " rows from " + testKey);
+    */
 
+    // We need to figure out which columns are needed for each sheet. Now is time for the relations registry or graph.
+    Map<DataContextKey, Set<Integer>> fkColumns = translatableSidecars
+      .flatMap(Sidecar2::relations)
+      .map(Sc2Relation::getForeign)
+      .foldLeft(HashMap.empty(),
+        (map, element) -> {
+          DataContextKey key = new DataContextKey(element.getFile(), element.getSheet(), element.getTableIndex());
+          Set<Integer> value = map.getOrElse(key, HashSet.empty());
+          value = value.addAll(element.getKeys());
+          return map.put(key, value);
+        });
+
+    Map<DataContextKey, Set<Integer>> pkColumns = translatableSidecars
+      .flatMap(Sidecar2::relations)
+      .map(Sc2Relation::getPrimary)
+      .foldLeft(HashMap.empty(),
+        (map, element) -> {
+          DataContextKey key = new DataContextKey(element.getFile(), element.getSheet(), element.getTableIndex());
+          Set<Integer> value = map.getOrElse(key, HashSet.empty());
+          value = value.addAll(element.getKeys());
+          return map.put(key, value);
+        });
+
+    Map<DataContextKey, Set<Integer>> ruleColumns = rulesRegistry.foldLeft(
+      HashMap.empty(),
+      (map, element) -> {
+        DataContextKey key = element._1;
+        Set<Integer> values = map.getOrElse(key, HashSet.empty());
+        values = values.addAll(element._2.map(Sc2Rule::getColumnIndex).filter(ci -> ci != -1));
+        return map.put(key, values);
+      });
+
+    System.out.println("== Primary Columns ==");
+    pkColumns.forEach((k, v) -> {
+      System.out.println(k);
+      System.out.println("\t" + v.mkString(", "));
+    });
+
+    System.out.println("== Foreign Columns ==");
+    fkColumns.forEach((k, v) -> {
+      System.out.println(k);
+      System.out.println("\t" + v.mkString(", "));
+    });
+
+    System.out.println("== Rule Columns ==");
+    ruleColumns.forEach((k,v) -> {
+      System.out.println(k);
+      System.out.println("\t" + v.mkString(", "));
+    });
     return new AceDataset();
   }
 
@@ -275,33 +339,29 @@ public class Sc2Translator implements IInputTranslator, WithWorkDir {
       List<Sidecar2> sidecars, List<Path> unreachable) {
     return sidecars.filter(s -> s.files().forAll(f -> unreachable.contains(Path.of(f.location()))));
   }
+
+  public List<String> getRealizationOrder(List<Sc2Relation> relations) {
+    Graph<DataContextKey, DefaultEdge> rGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+
+    for (Sc2Relation rel : relations) {
+      Sc2RelationKey primary = rel.getPrimary();
+      Sc2RelationKey foreign = rel.getForeign();
+      DataContextKey primaryKey = new DataContextKey(primary.getFile(), primary.getSheet(), primary.getTableIndex());
+      DataContextKey foreignKey = new DataContextKey(foreign.getFile(), foreign.getSheet(), foreign.getTableIndex());
+      rGraph.addVertex(primaryKey);
+      rGraph.addVertex(foreignKey);
+      rGraph.addEdge(primaryKey, foreignKey);
+    }
+    List<String> relOrder = List.empty();
+
+    Iterator<DataContextKey> iter = new TopologicalOrderIterator<>(rGraph);
+    while (iter.hasNext()) {
+      relOrder = relOrder.append(iter.next().toString());
+    }
+    return relOrder.reverse();
+  }
 }
 /*
-  public List<String> getRealizationOrder() {
-    Graph<DataContext, DefaultEdge> rGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
-    boolean addedPrimary;
-    boolean addedForeign;
-    for (Sc2Relation rel : _validRelations) {
-      Sc2Relation.Sc2RelationPart primary = rel.getPrimary();
-      Sc2Relation.Sc2RelationPart foreign = rel.getForeign();
-      String primaryKey = primary.getFile() + "$$" + primary.getSheet();
-      String foreignKey = foreign.getFile() + "$$" + foreign.getSheet();
-      DataContext p = _registry.get(primaryKey);
-      DataContext f = _registry.get(foreignKey);
-      rGraph.addVertex(p);
-      rGraph.addVertex(f);
-      rGraph.addEdge(p, f);
-    }
-    List<String> relOrder = new ArrayList<>();
-    Iterator<DataContext> iter = new TopologicalOrderIterator<>(rGraph);
-    iter.forEachRemaining(
-      v ->
-        relOrder.add(
-          v.toString(false) + " - " + rGraph.degreeOf(v) + "[" + v.maxBound() + "]"));
-    Collections.reverse(relOrder);
-    return relOrder;
-  }
-
   public Map<String, List<RawDataRow>> parseFiles() {
     return null;
   }
