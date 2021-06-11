@@ -38,13 +38,17 @@ public class DataContextKey {
     this.complete = false;
   }
 
-  public String getFile() { return file; }
+  public String getFile() {
+    return file;
+  }
 
   public String getSheetName() {
     return sheet;
   }
 
-  public int getTableId() { return tableId; }
+  public int getTableId() {
+    return tableId;
+  }
 
   public Sc2FileReference getFileRef() {
     return fileRef;

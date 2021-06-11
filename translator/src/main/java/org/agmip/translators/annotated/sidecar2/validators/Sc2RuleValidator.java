@@ -48,13 +48,13 @@ public class Sc2RuleValidator {
     if (index == -1) {
       if (value != null) {
         return RuleType.VALUE_RULE;
-      } else if (fun.isValid() && fun.get() != null) {
+      } else if (fun.isValid() && Objects.nonNull(fun.get())) {
         return RuleType.FUNCTION_RULE;
       } else {
         return RuleType.INVALID_RULE;
       }
     } else {
-      if (fun != null) {
+      if (fun.isValid() && Objects.nonNull(fun.get())) {
         return RuleType.FILL_WITH_FORMULA_RULE;
       } else {
         return RuleType.EXTRACTION_RULE;
